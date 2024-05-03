@@ -2,9 +2,12 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+-gitignore
+plant.ipynb
+plantParametric.ipynb
 # C extensions
 *.so
+*.mph
 
 # Distribution / packaging
 .Python
