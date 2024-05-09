@@ -71,20 +71,20 @@ def Sodium(T):
 
     def k():
         # thermal conductivity W/m/K
-        return 0
+        return 1  # TODO
 
     def cp():
         # soecific heat J/kg/K
-        return 0
+        return 1  # TODO
 
-    def k_H(T):
+    def k_S(T):
         # Henry's constant mol/m^3/Pa
         return 10 ** (0.86 - 122 / T)
 
     Sodium = FluidMaterial(
         T,
         D=H_diff(T),
-        Solubility=k_H(T),
+        Solubility=k_S(T),
         MS=False,
         mu=viscosity(T),
         rho=density(T),
@@ -94,11 +94,44 @@ def Sodium(T):
     return Sodium
 
 
+def LiPb(T):
+    def density(T):
+        return 9659.8  # TODO
+
+    def viscosity(T):
+        return 1  # TODO
+
+    def H_diff(T):
+        return 1  # TODO
+
+    def k():
+        # thermal conductivity W/m/K
+        return 1  # TODO
+
+    def cp():
+        # soecific heat J/kg/K
+        return 1  # TODO
+
+    def k_S(T):
+        # Henry's constant mol/m^3/Pa
+        MM_LiPb = 180  # TODO
+        return 4.7e-7 * np.exp(-9e3 / (R_const * T) * density(T) / MM_LiPb)  # TODO
+
+    LiPb = FluidMaterial(
+        T,
+        D=H_diff(T),
+        Solubility=k_S(T),
+        MS=False,
+        mu=viscosity(T),
+        rho=density(T),
+        k=k(),
+        cp=cp(),
+    )
+    return LiPb
+
+
 def Steel(T):
     # Define the solid material
-
-    def k_d(T):
-        return 8.67e17 / N_A * np.exp(-0.31 / (k_b * T))
 
     def H_diff(T):
         D_met = 5.81e-7 * np.exp(-66.3e3 / (R_const * T))
@@ -107,9 +140,6 @@ def Steel(T):
     def K_S(T):
         return 1
 
-    def k_r(T):
-        return 1
-
-    Steel = SolidMaterial(D=H_diff(T), K_S=K_S(T), k_d=k_d(T), k_r=k_r(T))
+    Steel = SolidMaterial(T=T, D=H_diff(T), K_S=K_S(T))
 
     return Steel

@@ -10,32 +10,39 @@ from scipy.constants import N_A
 from scipy.constants import physical_constants
 from scipy.optimize import minimize
 from scipy.special import lambertw
+from typing import Union
 
 
-def print_class_variables(instance):
+def print_class_variables(instance, variable_names=None, tab: int = 0):
     """
-    Prints all variables of a class. If a variable is a class itself,
-    calls this function recursively for the internal class.
+    Prints specified variables of a class. If a variable is a class itself,
+    calls this function recursively for the internal class. If variable_names is None,
+    prints all variables.
 
     Args:
         instance: The class instance.
+        variable_names (list of str, optional): Names of the variables to print. Prints all if None.
     """
     built_in_types = [
         Component,
         Fluid,
         Membrane,
-        GLC_Gas,
-        GLC,
         FluidMaterial,
         SolidMaterial,
         BreedingBlanket,
     ]
+    indent = "    " * tab  # Define the indentation as four spaces per tab level
     for attr_name, attr_value in instance.__dict__.items():
-        if type(attr_value) in built_in_types:
-            print(f"{attr_name} is a {type(attr_value)} class, printing its variables:")
-            print_class_variables(attr_value)
-        else:
-            print(f"{attr_name}: {attr_value}")
+        if variable_names is None or attr_name.lower() == variable_names.lower():
+            if type(attr_value) in built_in_types:
+                tab += 1
+                print(
+                    f"{indent}{attr_name} is a {type(attr_value)} class, printing its variables:"
+                )
+                print_class_variables(attr_value, variable_names, tab=tab)
+                tab -= 1
+            else:
+                print(f"{indent}{attr_name}: {attr_value}")
 
 
 def calculate_p_H2_from_c0(instance, c0):
@@ -54,6 +61,10 @@ def set_attribute(instance, attr_name, new_value):
     if hasattr(instance, attr_name):
         setattr(instance, attr_name, new_value)
     else:
+        for attr, value in instance.__dict__.items():
+            if isinstance(value, object) and hasattr(value, attr_name):
+                setattr(value, attr_name, new_value)
+                return
         raise ValueError(
             f"'{attr_name}' is not an attribute of {instance.__class__.__name__}"
         )
@@ -91,10 +102,11 @@ class Component:
         self.membrane = membrane
         self.H = None
         self.W = None
-        if self.fluid.k_t is None:
-            self.fluid.get_kt()
+        ##Todo initialize k_t
 
-    def update_attribute(self, attr_name, new_value):
+    def update_attribute(
+        self, attr_name: str = None, new_value: Union[float, "Fluid", "Membrane"] = None
+    ):
         """
         Updates the value of the specified attribute.
 
@@ -104,11 +116,11 @@ class Component:
         """
         set_attribute(self, attr_name, new_value)
 
-    def inspect(self):
+    def inspect(self, variable_names=None):
         """
         Prints the attributes of the component.
         """
-        print_class_variables(self)
+        print_class_variables(self, variable_names)
 
     def outlet_c_comp(self) -> float:
         """
@@ -129,7 +141,7 @@ class Component:
         leak = self.c_in * self.eff
         return leak
 
-    def get_regime(self):
+    def get_regime(self, print_var: bool = False):
         """
         Gets the regime of the component.
 
@@ -137,10 +149,12 @@ class Component:
             str: The regime of the component.
         """
         if self.fluid is not None:
-
-            if self.fluid.MS:
+            if self.fluid.k_t is None:
+                self.fluid.get_kt()
+            if self.fluid.MS == True:
                 if self.membrane is not None:
-                    return MS.get_regime(
+
+                    result = MS.get_regime(
                         k_d=self.membrane.k_d,
                         D=self.membrane.D,
                         thick=self.membrane.thick,
@@ -148,12 +162,14 @@ class Component:
                         c0=self.c_in,
                         k_t=self.fluid.k_t,
                         k_H=self.fluid.Solubility,
+                        print_var=print_var,
                     )
+                    return result
                 else:
                     return "No membrane selected"
             else:
                 if self.membrane is not None:
-                    return LM.get_regime(
+                    result = LM.get_regime(
                         D=self.membrane.D,
                         k_t=self.fluid.k_t,
                         K_S_S=self.membrane.K_S,
@@ -161,9 +177,13 @@ class Component:
                         k_r=self.membrane.k_r,
                         thick=self.membrane.thick,
                         c0=self.c_in,
+                        print_var=print_var,
                     )
+                    return result
                 else:
                     return "No membrane selected"
+        else:
+            return "No fluid selected"
 
     def get_adimensionals(self):
         """
@@ -171,6 +191,8 @@ class Component:
 
         Updates the H and W attributes of the Component object.
         """
+        if self.fluid.k_t is None:
+            self.fluid.get_kt()
         if self.fluid is not None:
             if self.fluid.MS:
                 self.H = MS.H(
@@ -208,7 +230,7 @@ class Component:
                     K_S_L=self.fluid.Solubility,
                 )
 
-    def use_analytical_efficiency(self, L):
+    def use_analytical_efficiency(self, L: float = None):
         """Evaluates the analytical efficiency and substitutes it in the efficiency attribute of the component.
 
         Args:
@@ -219,7 +241,9 @@ class Component:
         self.analytical_efficiency(L)
         self.eff = self.eff_an
 
-    def get_efficiency(self, L, plotvar: bool = False, c_guess: float = None):
+    def get_efficiency(
+        self, L: float = None, plotvar: bool = False, c_guess: float = None
+    ):
         """
         Calculates the efficiency of the component.
 
@@ -240,27 +264,27 @@ class Component:
                 f_H2 = 1
             if i == 0:
 
-                c_vec[i] = self.c_in
+                c_vec[i] = float(self.c_in)
 
-                if c_guess is float:
+                if isinstance(c_guess, float):
                     c_guess = self.get_flux(c_vec[i], c_guess=c_guess)
                 else:
-                    c_guess = self.get_flux(c_vec[i], c_guess=None)
+                    c_guess = self.get_flux(c_vec[i], c_guess=float(self.c_in))
             else:
                 c_vec[i] = c_vec[
                     i - 1
                 ] + f_H2 * self.J_perm * self.fluid.d_Hyd * np.pi * dl**2 / self.fluid.U0 / (
                     np.pi * self.fluid.d_Hyd**2 / 4 * dl
                 )
-                if c_guess is float:
+                if isinstance(c_guess, float):
                     c_guess = self.get_flux(c_vec[i], c_guess=c_guess)
                 else:
-                    c_guess = self.get_flux(c_vec[i], c_guess=None)
+                    c_guess = self.get_flux(c_vec[i], c_guess=float(self.c_in))
         if plotvar:
             plt.plot(L_vec, c_vec)
         self.eff = (self.c_in - c_vec[-1]) / self.c_in
 
-    def analytical_efficiency(self, L):
+    def analytical_efficiency(self, L: float = None):
         """
         Calculate the analytical efficiency of a component.
 
@@ -283,11 +307,11 @@ class Component:
 
         The output of the function is the analytical efficiency of the component as Component.eff_an.
         """
-
-        self.get_adimensionals()
+        if self.fluid.k_t is None:
+            self.fluid.get_kt()
         self.tau = 4 * self.fluid.k_t * L / (self.fluid.U0 * self.fluid.d_Hyd)
         if self.fluid.MS:
-            epsilon = (
+            self.epsilon = (
                 1
                 / self.c_in
                 / self.fluid.Solubility
@@ -306,21 +330,64 @@ class Component:
                 )
                 ** 2
             )
-            beta = (1 / epsilon + 1) ** 0.5 + np.log((1 / epsilon + 1) ** 0.5 - 1)
-            max_exp = np.log(np.finfo(np.float64).max)
-            beta_tau = beta - self.tau - 1
-            if beta_tau > max_exp:
-                print("Warning: Overflow encountered in exp, input too large.")
-                # Handle the overflow case here, e.g., by setting a maximum value
-                z = np.finfo(np.float64).max
+
+            if self.epsilon > 1e5:
+                self.eff_an = 1 - np.exp(-self.tau)
+            elif self.epsilon**0.5 < 1e-2 and self.tau < 1 / self.epsilon**0.5:
+                self.eff_an = 1 - (1 - self.tau * self.epsilon**0.5) ** 2
             else:
-                z = np.exp(beta_tau)
-            w = lambertw(z, tol=1e-10)
-            self.eff_an = 1 - epsilon * (w**2 + 2 * w)
-            if self.eff_an.imag != 0:
-                raise ValueError("self.eff_an has a non-zero imaginary part")
-            else:
-                self.eff_an = self.eff_an.real  # get rid of 0*j
+                beta = (1 / self.epsilon + 1) ** 0.5 + np.log(
+                    (1 / self.epsilon + 1) ** 0.5 - 1
+                )
+                max_exp = np.log(np.finfo(np.float64).max)
+                beta_tau = beta - self.tau - 1
+                if beta_tau > max_exp:
+                    print(
+                        "Warning: Overflow encountered in exp, input too large.Iterative solver triggered"
+                    )
+                    # we can use the approximation w=beta_tau-np.log(beta_tau)for the lambert W function but it leads to error up to 40 % in very niche scenarios.
+
+                    def eq(var):
+                        cl = var
+                        alpha = self.epsilon * self.c_in
+                        left = (cl / alpha + 1) ** 0.5 + np.log(
+                            (cl / alpha + 1) ** 0.5 - 1 + 1e-10
+                        )
+                        right = beta - self.tau
+
+                        return abs(left - right)
+
+                    cl = minimize(
+                        eq,
+                        self.c_in / 2,
+                        method="Powell",
+                        bounds=[(0, self.c_in)],
+                        tol=1e-7,
+                    ).x[0]
+                    self.eff_an = 1 - (cl / self.c_in)
+                else:
+                    z = np.exp(beta_tau)
+                    w = lambertw(z, tol=1e-10)
+                    self.eff_an = 1 - self.epsilon * (w**2 + 2 * w)
+                    if self.eff_an.imag != 0:
+                        raise ValueError("self.eff_an has a non-zero imaginary part")
+                    else:
+                        self.eff_an = self.eff_an.real  # get rid of 0*j
+
+            # max_exp = np.log(np.finfo(np.float64).max)
+            # beta_tau = beta - self.tau - 1
+            # if beta_tau > max_exp:
+            #     print("Warning: Overflow encountered in exp, input too large.")
+            #     # Handle the overflow case here, e.g., by setting a maximum value
+            #     z = np.finfo(np.float64).max
+            # else:
+            #     z = np.exp(beta_tau)
+            # w = lambertw(z, tol=1e-10)
+            # self.eff_an = 1 - self.epsilon * (w**2 + 2 * w)
+            # if self.eff_an.imag != 0:
+            #     raise ValueError("self.eff_an has a non-zero imaginary part")
+            # else:
+            #     self.eff_an = self.eff_an.real  # get rid of 0*j
         else:
             self.zeta = (2 * self.membrane.K_S * self.membrane.D) / (
                 self.fluid.k_t
@@ -332,7 +399,7 @@ class Component:
             )
             self.eff_an = 1 - np.exp(-self.tau * self.zeta / (1 + self.zeta))
 
-    def get_flux(self, c, c_guess=None):
+    def get_flux(self, c: float = None, c_guess: float = 1e-9):
         """
         Calculates the Tritium flux of the component.
         It can make some approximations based on W and H to make the solver faster
@@ -344,6 +411,12 @@ class Component:
             float: The permeation flux.
 
         """
+        if not isinstance(c, float):
+            print(c)
+            raise ValueError("Input 'c' must be a non-empty numpy array")
+
+        if not isinstance(c_guess, float):
+            raise ValueError("c_guess must be a float")
         self.get_adimensionals()
         if self.fluid.MS:
             if self.W > 10:
@@ -369,6 +442,8 @@ class Component:
                 else:
                     # Mixed regime mass transport diffusion
                     def equations(vars):
+                        if vars.size == 0:
+                            return upper_bound
                         c_wl = vars
                         J_mt = 2 * self.fluid.k_t * (c - c_wl)
                         J_diff = (
@@ -386,22 +461,26 @@ class Component:
                                 * (c_wl / self.fluid.Solubility) ** 0.5
                             )
                         )
-                        return abs((J_diff - J_mt))
+                        return abs(J_diff - J_mt)
 
-                    if c_guess is None:
-                        initial_guess = [(c * 1e-2)]
-                    else:
+                    if isinstance(c_guess, float):
+
                         initial_guess = c_guess
+                    else:
+                        ValueError("c_guess must be a float")
+                    initial_guess = c_guess
+                    min_upper_bound = 1e-4  # Set a minimum value for the upper bound
+                    upper_bound = max(c * (1 + 1e-4), min_upper_bound)
                     solution = minimize(
                         equations,
                         initial_guess,
                         method="Powell",
                         bounds=[
-                            (0, c),
+                            (0, upper_bound),
                         ],
-                        tol=1e-15,
+                        tol=1e-8,
                         options={
-                            "maxiter": int(1e6),
+                            "maxiter": int(1e7),
                         },
                     )
                     self.J_perm = (
@@ -435,9 +514,9 @@ class Component:
                         initial_guess,
                         method="Powell",
                         bounds=[
-                            (0, c),
+                            (0, c * (1 + 1e-4)),
                         ],
-                        tol=1e-15,
+                        tol=1e-8,
                         options={
                             "maxiter": int(1e6),
                         },
@@ -488,7 +567,7 @@ class Component:
                         bounds=[
                             (1e-14, c),
                         ],
-                        tol=1e-15,
+                        tol=1e-8,
                         options={
                             "maxiter": int(1e6),
                         },
@@ -517,7 +596,7 @@ class Component:
 
                         J_d = self.membrane.k_d * (
                             c_wl / self.membrane.K_S
-                        ) - self.membrane.k_d * self.membrane.K_S * (c_ws**2)
+                        ) - self.membrane.k_d * self.membrane.K_S**2 * (c_ws**2)
                         J_diff = (
                             self.membrane.D
                             / (
@@ -530,27 +609,29 @@ class Component:
                             )
                             * (self.membrane.K_S * c_ws)
                         )
-                        eq1 = abs(J_mt / J_d - 1)
-                        eq2 = abs(J_mt / J_diff - 1)
+                        eq1 = abs(J_mt - J_d)
+                        eq2 = abs(J_mt - J_diff)
+                        eq3 = abs(J_d - J_diff)
 
-                        return [eq1, eq2]
+                        return eq1 + eq2 + eq3
 
                     initial_guess = [(2 * c / 3), (c / 3)]
                     solution = minimize(
                         equations,
                         initial_guess,
                         method="Powell",
-                        bounds=[
-                            (0, c),
-                        ],
-                        tol=1e-15,
+                        bounds=[(0, c), (0, c)],
+                        tol=1e-8,
                         options={
                             "maxiter": int(1e6),
                         },
                     )
                     c_wl = solution.x[0]
                     self.J_perm = 2 * self.fluid.k_t * (c - c_wl)
-                    return float(solution.x[0])
+                    result = float(solution.x[0])
+                    if np.isscalar(result):
+                        return result
+
         else:
             if self.W > 10:
                 # DIFFUSION LIMITED
@@ -600,9 +681,9 @@ class Component:
                         initial_guess,
                         method="Powell",
                         bounds=[
-                            (0, c),
+                            (0, c * (1 + 1e-4)),
                         ],
-                        tol=1e-15,
+                        tol=1e-8,
                         options={
                             "maxiter": int(1e6),
                         },
@@ -636,9 +717,9 @@ class Component:
                         initial_guess,
                         method="Powell",
                         bounds=[
-                            (0, c),
+                            (0, c * (1 + 1e-4)),
                         ],
-                        tol=1e-15,
+                        tol=1e-8,
                         options={
                             "maxiter": int(1e6),
                         },
@@ -686,7 +767,7 @@ class Component:
                         bounds=[
                             (1e-14, c),
                         ],
-                        tol=1e-15,
+                        tol=1e-8,
                         options={
                             "maxiter": int(1e6),
                         },
@@ -728,10 +809,11 @@ class Component:
                             )
                             * (self.membrane.K_S * c_ws)
                         )
-                        eq1 = abs(J_mt / J_d - 1)
-                        eq2 = abs(J_mt / J_diff - 1)
+                        eq1 = abs(J_mt - J_d)
+                        eq2 = abs(J_mt - J_diff)
+                        eq3 = abs(J_d - J_diff)
 
-                        return [eq1, eq2]
+                        return eq1 + eq2 + eq3
 
                     initial_guess = [(2 * c / 3), (c / 3)]
                     solution = minimize(
@@ -739,9 +821,9 @@ class Component:
                         initial_guess,
                         method="Powell",
                         bounds=[
-                            (0, c),
+                            (0, c * (1 + 1e-4)),
                         ],
-                        tol=1e-15,
+                        tol=1e-8,
                         options={
                             "maxiter": int(1e6),
                         },
@@ -790,10 +872,10 @@ class Fluid:
 
     def __init__(
         self,
-        T: float,
-        D: float,
-        Solubility: float,
-        MS: bool,
+        T: float = None,
+        D: float = None,
+        Solubility: float = None,
+        MS: bool = True,
         d_Hyd: float = None,
         k_t: float = None,
         mu: float = None,
@@ -829,7 +911,9 @@ class Fluid:
         self.k = k
         self.cp = cp
 
-    def update_attribute(self, attr_name, new_value):
+    def update_attribute(
+        self, attr_name: str = None, new_value: Union[float, "FluidMaterial"] = None
+    ):
         """
         Updates the value of the specified attribute.
 
@@ -839,11 +923,28 @@ class Fluid:
         """
         set_attribute(self, attr_name, new_value)
 
-    def inspect(self):
+    def inspect(self, variable_names=None):
         """
         Prints the attributes of the component.
         """
-        print_class_variables(self)
+        print_class_variables(self, variable_names)
+
+    def set_properties_from_fluid_material(
+        self, fluid_material: "FluidMaterial" = None
+    ):
+        """
+        Sets the properties of the fluid from a FluidMaterial object.
+
+        Args:
+            fluid_material (FluidMaterial): The FluidMaterial object to set the properties from.
+        """
+        self.T = fluid_material.T
+        self.D = fluid_material.D
+        self.Solubility = fluid_material.Solubility
+        self.mu = fluid_material.mu
+        self.rho = fluid_material.rho
+        self.cp = fluid_material.cp
+        self.k = fluid_material.k
 
     def get_kt(self):
         """
@@ -859,9 +960,9 @@ class Fluid:
             if self.k_t is None:
                 Re = corr.Re(rho=self.rho, u=self.U0, L=self.d_Hyd, mu=self.mu)
                 Sc = corr.Schmidt(D=self.D, mu=self.mu, rho=self.rho)
-                if Re < 1e4 and Re > 2030:
-                    Sh = 0.015 * Re**0.83 * Sc**0.42  ## Stempien Thesis pg 155-157
-                elif Re > 1e4:
+                # if Re < 1e4 and Re > 2030:
+                #     Sh = 0.015 * Re**0.83 * Sc**0.42  ## Stempien Thesis pg 155-157 TODO implement different Re ranges
+                if Re > 2030:
                     Sh = 0.0096 * Re**0.913 * Sc**0.346  ##Getthem paper
                 else:
                     print(Re)
@@ -887,18 +988,19 @@ class Membrane:
         D (float): Diffusion coefficient of the membrane.
         thick (float): Thickness of the membrane.
         K_S (float): Solubility coefficient of the membrane.
-        k_d (float, optional): Dissociation rate constant of the membrane. Defaults to 1e6.
-        k_r (float, optional): Recombination rate constant of the membrane. Defaults to 1e6.
+        k_d (float, optional): Dissociation rate constant of the membrane. Defaults to None.
+        k_r (float, optional): Recombination rate constant of the membrane. Defaults to None.
+        k (float, optional): Thermal conductivity of the membrane. Defaults to None.
     """
 
     def __init__(
         self,
-        T: float,
-        D: float,
-        thick: float,
-        K_S: float,
-        k_d: float = 1e6,
-        k_r: float = 1e6,
+        T: float = None,
+        D: float = None,
+        thick: float = None,
+        K_S: float = None,
+        k_d: float = None,
+        k_r: float = None,
         k: float = None,
     ):
         """
@@ -920,7 +1022,9 @@ class Membrane:
         self.k_r = k_r
         self.k = k
 
-    def update_attribute(self, attr_name, new_value):
+    def update_attribute(
+        self, attr_name: str = None, new_value: Union[float, "SolidMaterial"] = None
+    ):
         """
         Updates the value of the specified attribute.
 
@@ -930,140 +1034,157 @@ class Membrane:
         """
         set_attribute(self, attr_name, new_value)
 
-    def inspect(self):
+    def inspect(self, variable_names=None):
         """
         Prints the attributes of the component.
         """
-        print_class_variables(self)
+        print_class_variables(self, variable_names)
 
-
-class GLC_Gas:
-    """
-    GLC_Gas class represents a sweep gas in a GLC (Gas-Liquid Contactor) system.
-
-    Attributes:
-        G_gas (float): The flow rate of the gas.
-        pg_in (float, optional): The Tritium inlet partial pressure of the gas. Default is 0.
-        p_tot (float, optional): The total pressure of the component. Default is 100000 Pa.
-        kla (float, optional): The total (kl*Area) mass transfer coefficient. Default is 0.
-    """
-
-    def __init__(
-        self, G_gas: float, pg_in: float = 0, p_tot: float = 100000, kla: float = 0
+    def set_properties_from_solid_material(
+        self, solid_material: "SolidMaterial" = None
     ):
         """
-        Initializes a new instance of the GLC_Gas class.
+        Sets the properties of the membrane from a SolidMaterial object.
 
         Args:
-            G_gas (float): The flow rate of the gas.
-            pg_in (float, optional): The Tritium inlet partial pressure of the gas. Default is 0.
-            p_tot (float, optional): The total pressure of the component. Default is 100000 Pa.
-            kla (float, optional): The total (kl*Area) mass transfer coefficient. Default is 0.
+            solid_material (SolidMaterial): The SolidMaterial object to set the properties from.
         """
-        self.G_gas = G_gas
-        self.pg_in = pg_in
-        self.p_tot = p_tot
-        self.kla = kla
-
-    def update_attribute(self, attr_name, new_value):
-        """
-        Updates the value of the specified attribute.
-
-        Args:
-            attr_name (str): The name of the attribute to update.
-            new_value: The new value for the attribute.
-        """
-        set_attribute(self, attr_name, new_value)
-
-    def inspect(self):
-        """
-        Prints the attributes of the component.
-        """
-        print_class_variables(self)
+        self.T = solid_material.T
+        self.D = solid_material.D
+        self.K_S = solid_material.K_S
 
 
-class GLC(Component):
-    """
-    GLC (Gas-Liquid Contact) class represents a gas-liquid contactor component.
+# class GLC_Gas:
+#     """
+#     GLC_Gas class represents a sweep gas in a GLC (Gas-Liquid Contactor) system.
 
-    Args:
-        H (float): Height of the GLC.
-        R (float): Radius of the GLC.
-        L (float): Characteristic Length of the GLC fluid flow.
-        c_in (float): Inlet concentration of the GLC.
-        eff (float, optional): Efficiency of the GLC. Defaults to None.
-        fluid (Fluid, optional): Fluid object representing the liquid phase. Defaults to None.
-        membrane (Membrane, optional): Membrane object representing the membrane used in the GLC. Not super important. Defaults to None.
-        GLC_gas (GLC_Gas, optional): GLC_Gas object representing the gas phase. Defaults to None.
+#     Attributes:
+#         G_gas (float): The flow rate of the gas.
+#         pg_in (float, optional): The Tritium inlet partial pressure of the gas. Default is 0.
+#         p_tot (float, optional): The total pressure of the component. Default is 100000 Pa.
+#         kla (float, optional): The total (kl*Area) mass transfer coefficient. Default is 0.
+#     """
 
-    Attributes:
-        H (float): Height of the GLC [m].
-        R (float): Radius of the GLC [m].
-        L (float): Length of the GLC [m].
-        GLC_gas (GLC_Gas): GLC_Gas object representing the gas phase.
+#     def __init__(
+#         self,
+#         G_gas: float = None,
+#         pg_in: float = 0,
+#         p_tot: float = 100000,
+#         kla: float = 0,
+#     ):
+#         """
+#         Initializes a new instance of the GLC_Gas class.
 
-    Methods:
-        get_kla_Ring(): Calculates the mass transfer coefficient (kla) for a Raschig Ring matrix.
-    """
+#         Args:
+#             G_gas (float): The flow rate of the gas.
+#             pg_in (float, optional): The Tritium inlet partial pressure of the gas. Default is 0.
+#             p_tot (float, optional): The total pressure of the component. Default is 100000 Pa.
+#             kla (float, optional): The total (kl*Area) mass transfer coefficient. Default is 0.
+#         """
+#         self.G_gas = G_gas
+#         self.pg_in = pg_in
+#         self.p_tot = p_tot
+#         self.kla = kla
 
-    def __init__(
-        self,
-        H: float,
-        R: float,
-        L: float,
-        c_in: float,
-        eff: float = None,
-        fluid: "Fluid" = None,
-        membrane: "Membrane" = None,
-        GLC_gas: "GLC_Gas" = None,
-    ):
-        """
-        Initializes a new instance of the GLC class.
+#     def update_attribute(self, attr_name: str, new_value: float):
+#         """
+#         Updates the value of the specified attribute.
 
-        Args:
-            H (float): Height of the GLC.
-            R (float): Radius of the GLC.
-            L (float): Characteristic Length of the GLC fluid flow.
-            c_in (float): Inlet concentration of the GLC.
-            eff (float, optional): Efficiency of the GLC. Defaults to None.
-            fluid (Fluid, optional): Fluid object representing the liquid phase. Defaults to None.
-            membrane (Membrane, optional): Membrane object representing the membrane used in the GLC. Not super important. Defaults to None.
-            GLC_gas (GLC_Gas, optional): GLC_Gas object representing the gas phase. Defaults to None.
-        """
-        super().__init__(c_in, eff, fluid, membrane)
-        self.H = H
-        self.R = R
-        self.L = L
-        self.GLC_gas = GLC_gas
+#         Args:
+#             attr_name (str): The name of the attribute to update.
+#             new_value: The new value for the attribute.
+#         """
+#         set_attribute(self, attr_name, new_value)
 
-    def get_kla_Ring(self):
-        """
-        Calculates the mass transfer coefficient (kla) for a Raschig ring matrix.
+#     def inspect(self, variable_names=None):
+#         """
+#         Prints the attributes of the component.
+#         """
+#         print_class_variables(self, variable_names)
 
-        The mass transfer coefficient is calculated based on the Reynolds number (Re) and Schmidt number (Sc) of the fluid,
-        as well as the diameter (d) of the ring.
 
-        Returns:
-            None
-        """
-        d = 2e-3  # Ring diameter
-        Re = corr.Re(rho=self.fluid.rho, u=self.fluid.U0, L=self.L, mu=self.fluid.mu)
-        Sc = corr.Schmidt(D=self.fluid.D, mu=self.fluid.mu, rho=self.fluid.rho)
-        self.GLC_gas.kla = extractor.corr_packed(
-            Re,
-            Sc,
-            d,
-            rho_L=self.fluid.rho,
-            mu_L=self.fluid.mu,
-            L=self.L,
-            D=self.fluid.D,
-        )
+# class GLC(Component):
+#     """
+#     GLC (Gas-Liquid Contact) class represents a gas-liquid contactor component.
 
-    def inspect(self):
-        """
-        Prints the attributes of the component.
-        """
-        print_class_variables(self)
+#     Args:
+#         H (float): Height of the GLC.
+#         R (float): Radius of the GLC.
+#         L (float): Characteristic Length of the GLC fluid flow.
+#         c_in (float): Inlet concentration of the GLC.
+#         eff (float, optional): Efficiency of the GLC. Defaults to None.
+#         fluid (Fluid, optional): Fluid object representing the liquid phase. Defaults to None.
+#         membrane (Membrane, optional): Membrane object representing the membrane used in the GLC. Not super important. Defaults to None.
+#         GLC_gas (GLC_Gas, optional): GLC_Gas object representing the gas phase. Defaults to None.
+
+#     Attributes:
+#         H (float): Height of the GLC [m].
+#         R (float): Radius of the GLC [m].
+#         L (float): Length of the GLC [m].
+#         GLC_gas (GLC_Gas): GLC_Gas object representing the gas phase.
+
+#     Methods:
+#         get_kla_Ring(): Calculates the mass transfer coefficient (kla) for a Raschig Ring matrix.
+#     """
+
+#     def __init__(
+#         self,
+#         H: float = None,
+#         R: float = None,
+#         L: float = None,
+#         c_in: float = None,
+#         eff: float = None,
+#         fluid: "Fluid" = None,
+#         membrane: "Membrane" = None,
+#         GLC_gas: "GLC_Gas" = None,
+#     ):
+#         """
+#         Initializes a new instance of the GLC class.
+
+#         Args:
+#             H (float): Height of the GLC.
+#             R (float): Radius of the GLC.
+#             L (float): Characteristic Length of the GLC fluid flow.
+#             c_in (float): Inlet concentration of the GLC.
+#             eff (float, optional): Efficiency of the GLC. Defaults to None.
+#             fluid (Fluid, optional): Fluid object representing the liquid phase. Defaults to None.
+#             membrane (Membrane, optional): Membrane object representing the membrane used in the GLC. Not super important. Defaults to None.
+#             GLC_gas (GLC_Gas, optional): GLC_Gas object representing the gas phase. Defaults to None.
+#         """
+#         super().__init__(c_in, eff, fluid, membrane)
+#         self.H = H
+#         self.R = R
+#         self.L = L
+#         self.GLC_gas = GLC_gas
+
+#     def get_kla_Ring(self):
+#         """
+#         Calculates the mass transfer coefficient (kla) for a Raschig ring matrix.
+
+#         The mass transfer coefficient is calculated based on the Reynolds number (Re) and Schmidt number (Sc) of the fluid,
+#         as well as the diameter (d) of the ring.
+
+#         Returns:
+#             None
+#         """
+#         d = 2e-3  # Ring diameter
+#         Re = corr.Re(rho=self.fluid.rho, u=self.fluid.U0, L=self.L, mu=self.fluid.mu)
+#         Sc = corr.Schmidt(D=self.fluid.D, mu=self.fluid.mu, rho=self.fluid.rho)
+#         self.GLC_gas.kla = extractor.corr_packed(
+#             Re,
+#             Sc,
+#             d,
+#             rho_L=self.fluid.rho,
+#             mu_L=self.fluid.mu,
+#             L=self.L,
+#             D=self.fluid.D,
+#         )
+
+#     def inspect(self, variable_names=None):
+#         """
+#         Prints the attributes of the component.
+#         """
+#         print_class_variables(self, variable_names)
 
 
 class FluidMaterial:
@@ -1081,7 +1202,17 @@ class FluidMaterial:
         cp (float): Specific heat capacity of the fluid material.
     """
 
-    def __init__(self, T, D, Solubility, MS, mu, rho, k, cp):
+    def __init__(
+        self,
+        T: float = None,
+        D: float = None,
+        Solubility: float = None,
+        MS: bool = None,
+        mu: float = None,
+        rho: float = None,
+        k: float = None,
+        cp: float = None,
+    ):
         self.T = T
         self.D = D
         self.Solubility = Solubility
@@ -1091,11 +1222,21 @@ class FluidMaterial:
         self.k = k
         self.cp = cp
 
-    def inspect(self):
+    def inspect(self, variable_names=None):
         """
         Prints the attributes of the component.
         """
-        print_class_variables(self)
+        print_class_variables(self, variable_names)
+
+    def update_attribute(self, attr_name: str, new_value: float):
+        """
+        Updates the value of the specified attribute.
+
+        Args:
+            attr_name (str): The name of the attribute to update.
+            new_value: The new value for the attribute.
+        """
+        set_attribute(self, attr_name, new_value)
 
 
 class SolidMaterial:
@@ -1105,21 +1246,31 @@ class SolidMaterial:
     Attributes:
         D (float): The Diffusivity of the solid material.
         K_S (float): The Sievert constant of the solid material.
-        k_d (float): Dissociation constant of the solid material.
-        k_r (float): The Recombination constant of the solid material.
     """
 
-    def __init__(self, D, K_S, k_d, k_r):
+    def __init__(
+        self, T: float = None, D: float = None, K_S: float = None, k: float = None
+    ):
+        self.T = T
         self.D = D
         self.K_S = K_S
-        self.k_d = k_d
-        self.k_r = k_r
+        self.k = k
 
-    def inspect(self):
+    def inspect(self, variable_names=None):
         """
         Prints the attributes of the component.
         """
-        print_class_variables(self)
+        print_class_variables(self, variable_names)
+
+    def update_attribute(self, attr_name: str, new_value: float):
+        """
+        Updates the value of the specified attribute.
+
+        Args:
+            attr_name (str): The name of the attribute to update.
+            new_value: The new value for the attribute.
+        """
+        set_attribute(self, attr_name, new_value)
 
 
 class BreedingBlanket:
@@ -1151,13 +1302,13 @@ class BreedingBlanket:
         self.T_in = T_in
         self.fluid = fluid
 
-    def inspect(self):
+    def inspect(self, variable_names=None):
         """
         Prints the attributes of the component.
         """
-        print_class_variables(self)
+        print_class_variables(self, variable_names)
 
-    def update_attribute(self, attr_name, new_value):
+    def update_attribute(self, attr_name: str, new_value: float):
         """
         Updates the value of the specified attribute.
 
