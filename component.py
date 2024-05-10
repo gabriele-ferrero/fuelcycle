@@ -24,6 +24,7 @@ class Component:
         self.tritium_inventory = initial_inventory
         self.tritium_source = tritium_source
         self.non_radioactive_loss = non_radioactive_loss
+        super().__init__()
 
     def add_input_port(self, port_name, incoming_fraction=1.0):
         """
@@ -136,7 +137,9 @@ class Component:
         """
         self.tritium_inventory = new_value
 
-
 class TritoneComponent(Component, tritoneComponent):
     # Multiple inheritance from Component and tritoneComponent
+    def __init__(self, name, fluid, membrane):
+        Component.__init__(self, name, residence_time=0) 
+        tritoneComponent.__init__(self, fluid=fluid, membrane=membrane)
 
