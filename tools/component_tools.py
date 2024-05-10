@@ -250,6 +250,12 @@ class Component:
         """
         Calculates the efficiency of the component.
         """
+
+        if self.c_in == 0:
+            self.c_out = 0
+            self.eff = 0
+            return
+        
         L_vec = np.linspace(0, self.L, 100)
         dl = L_vec[1] - L_vec[0]
 

@@ -144,8 +144,8 @@ class TritoneComponent(Component, tritoneComponent):
         self.volume = 1e3
         self.flow_rate = 1e5
         Component.__init__(self, name, residence_time=1) 
-        tritoneComponent.__init__(self, L=L, fluid=fluid, membrane=membrane)
-        self.c_in = self.get_inflow() / self.flow_rate + 1e-12
+        tritoneComponent.__init__(self, c_in = 0, L=L, fluid=fluid, membrane=membrane)
+        # self.c_in = self.get_inflow() / self.flow_rate + 1e-12 # TODO: use a better initialisation
 
     def get_outflow(self):
         self.get_efficiency()
