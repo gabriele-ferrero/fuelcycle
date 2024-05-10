@@ -18,7 +18,7 @@ tau_ifc = 5 * 3600
 I_startup = 2
 TBE = 0.02
 final_time = 2.1 * 3600 * 24 * 365 # NB: longer than doubling time
-
+L = 1
 q = 0.25
 t_res = 24 * 3600
 I_reserve = N_burn / TBE * q * t_res
@@ -38,8 +38,7 @@ fueling_system = FuelingSystem("Fueling System", N_burn, TBE, initial_inventory=
 BB = BreedingBlanket("BB", tau_ofc, initial_inventory=0, N_burn = N_burn, TBR = TBR)
 plasma = Plasma("Plasma", N_burn, TBE, initial_inventory=0)
 IFC = Component("IFC", tau_ifc)
-PAV = TritoneComponent("PAV", fluid=flibe, membrane=Steel)
-
+PAV = TritoneComponent("PAV", L=L, fluid=flibe, membrane=Steel)
 
 # Define ports
 port1 = fueling_system.add_output_port("Fueling to Plasma")

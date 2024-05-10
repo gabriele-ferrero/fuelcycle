@@ -84,6 +84,7 @@ class Component:
         self,
         c_in: float = None,
         eff: float = None,
+        L: float = None,
         fluid: "Fluid" = None,
         membrane: "Membrane" = None,
     ):
@@ -93,11 +94,13 @@ class Component:
         Args:
             c_in (float): The concentration of the component at the inlet.
             eff (float, optional): The efficiency of the component. Defaults to None.
+            L (float, optional): The length of the component. Defaults to None.
             fluid (Fluid, optional): The fluid associated with the component. Defaults to None.
             membrane (Membrane, optional): The membrane associated with the component. Defaults to None.
         """
         self.c_in = c_in
         self.eff = eff
+        self.L = L
         self.fluid = fluid
         self.membrane = membrane
         self.H = None
@@ -242,18 +245,12 @@ class Component:
         self.eff = self.eff_an
 
     def get_efficiency(
-        self, L: float = None, plotvar: bool = False, c_guess: float = None
+        self, plotvar: bool = False, c_guess: float = None
     ):
         """
         Calculates the efficiency of the component.
-
-        Args:
-            L (float): The characteristic length of the component.
-
-        Returns:
-            float: The efficiency of the component.
         """
-        L_vec = np.linspace(0, L, 100)
+        L_vec = np.linspace(0, self.L, 100)
         dl = L_vec[1] - L_vec[0]
 
         c_vec = np.ndarray(len(L_vec))
