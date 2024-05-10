@@ -1,4 +1,5 @@
 from port import Port
+from tools.component_tools import Component as tritoneComponent
 LAMBDA = 1.73e-9 # Decay constant for tritium
 
 class Component:
@@ -134,3 +135,8 @@ class Component:
             new_value (float): The new value of the tritium inventory.
         """
         self.tritium_inventory = new_value
+
+
+class TritoneComponent(Component, tritoneComponent):
+    # Multiple inheritance from Component and tritoneComponent
+
