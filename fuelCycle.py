@@ -11,7 +11,7 @@ import numpy as np
 
 LAMBDA = 1.73e-9 # Decay constant for tritium
 AF = 0.7
-N_burn = 9.3e-7 * AF # Tritium burn rate in the plasma
+N_burn = 9.3e-7 # Tritium burn rate in the plasma
 TBR = 1.06
 tau_bb = 1.25 * 3600
 tau_fc =  3600
