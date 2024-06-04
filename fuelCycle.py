@@ -9,8 +9,11 @@ from simulate import Simulate
 from tools.utils import visualize_connections
 import numpy as np
 
+
+# TODO: pulsed source and fp 
+
 LAMBDA = 1.73e-9 # Decay constant for tritium
-AF = 0.7
+AF = 0.95
 N_burn = 9.3e-7 # Tritium burn rate in the plasma
 TBR = 1.06
 tau_bb = 1.25 * 3600
@@ -23,6 +26,7 @@ tau_ds = 3600
 tau_vp = 600
 tau_iss = 3 * 3600
 tau_membrane = 100
+pulse_period = 1800
 
 f_dir = 0.3
 f_iss_ds = 0.1
@@ -47,7 +51,7 @@ BB = BreedingBlanket("BB", tau_bb, initial_inventory=0, N_burn = N_burn, TBR = T
 FW = Component("FW", residence_time = tau_FW)
 divertor = Component("Divertor", residence_time = tau_div)
 fuel_cleanup = Component("Fuel cleanup", tau_fc)
-plasma = Plasma("Plasma", N_burn, TBE) 
+plasma = Plasma("Plasma", N_burn, TBE, AF, pulse_period) 
 TES = Component("TES", residence_time = tau_tes)
 HX = Component("HX", residence_time = tau_HX)
 DS = Component("DS", residence_time = tau_ds)
