@@ -14,13 +14,17 @@ AF = 0.7
 N_burn = 9.3e-7 * AF # Tritium burn rate in the plasma
 TBR = 1.062
 tau_ofc = 2 * 3600
-tau_ifc = 5 * 3600
+tau_ifc = 4 * 3600
 tau_tes = 24 * 3600
 tau_HX = 1 * 3600
 tau_FW = 1000
 tau_div = 1000
 tau_ds = 3600
-I_startup = 1.3
+tau_vp = 600
+tau_iss = 3 * 3600
+f_dir = 0.3
+
+I_startup = 1.1
 TBE = 0.02
 tes_efficiency = 0.9
 final_time = 2.1 * 3600 * 24 * 365 # NB: longer than doubling time
@@ -37,19 +41,20 @@ I_reserve = N_burn / TBE * q * t_res
 # Define components
 fueling_system = FuelingSystem("Fueling System", N_burn, TBE, initial_inventory=I_startup)
 BB = BreedingBlanket("BB", tau_ofc, initial_inventory=0, N_burn = N_burn, TBR = TBR)
-FW = Component("FW", residence_time = 600)
-divertor = Component("Divertor", residence_time = 600)
+FW = Component("FW", residence_time = tau_FW)
+divertor = Component("Divertor", residence_time = tau_div)
 IFC = Component("IFC", tau_ifc)
 plasma = Plasma("Plasma", N_burn, TBE) 
 TES = Component("TES", residence_time = tau_tes)
 HX = Component("HX", residence_time = tau_HX)
 DS = Component("DS", residence_time = tau_ds)
+VP = Component("VP", residence_time = tau_vp)
 
 # Define ports
 port1 = fueling_system.add_output_port("Fueling to Plasma")
 port2 = plasma.add_input_port("Port 2")
-port3 = plasma.add_output_port("Plasma to IFC")
-port4 = IFC.add_input_port("Port 4")
+port3 = plasma.add_output_port("Plasma to VP")
+port4 = IFC.add_input_port("Port 4", incoming_fraction= 1 - f_dir)
 port5 = IFC.add_output_port("IFC to Fueling System")
 port6 = BB.add_output_port("OFC to TES")
 port7 = fueling_system.add_input_port("Port 7")
@@ -73,6 +78,10 @@ port24 = DS.add_input_port("Port 24", incoming_fraction=hx_to_ds)
 port25 = DS.add_output_port("DS to IFC")
 port26 = HX.add_output_port("HX to DS")
 port27 = IFC.add_input_port("Port 27")  
+port28 = VP.add_input_port("Port 28")
+port29 = VP.add_output_port("VP to IFC")
+port30 = VP.add_output_port("VP to Fueling System")
+port31 = fueling_system.add_input_port("Port 31", incoming_fraction=f_dir)
 
 # Add components to component map
 component_map = ComponentMap()
@@ -85,10 +94,13 @@ component_map.add_component(HX)
 component_map.add_component(FW)
 component_map.add_component(divertor)
 component_map.add_component(DS)
+component_map.add_component(VP)
 
 # Connect ports
 component_map.connect_ports(fueling_system, port1, plasma, port2)
-component_map.connect_ports(plasma, port3, IFC, port4)
+component_map.connect_ports(plasma, port3, VP, port28)
+component_map.connect_ports(VP, port29, IFC, port4)
+component_map.connect_ports(VP, port30, fueling_system, port31)
 component_map.connect_ports(IFC, port5, fueling_system, port7)
 component_map.connect_ports(BB, port6, TES, port11)
 component_map.connect_ports(TES, port9, fueling_system, port12)
