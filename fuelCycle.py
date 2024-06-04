@@ -7,11 +7,12 @@ from componentMap import ComponentMap
 from matplotlib import pyplot as plt
 from simulate import Simulate
 from tools.utils import visualize_connections
+import numpy as np
 
 LAMBDA = 1.73e-9 # Decay constant for tritium
 AF = 0.7
 N_burn = 9.3e-7 * AF # Tritium burn rate in the plasma
-TBR = 1.01
+TBR = 1.062
 tau_ofc = 2 * 3600
 tau_ifc = 5 * 3600
 tau_tes = 24 * 3600
@@ -19,7 +20,7 @@ tau_HX = 1 * 3600
 tau_FW = 1000
 tau_div = 1000
 tau_ds = 3600
-I_startup = 1.5
+I_startup = 1.3
 TBE = 0.02
 tes_efficiency = 0.9
 final_time = 2.1 * 3600 * 24 * 365 # NB: longer than doubling time
@@ -103,9 +104,11 @@ component_map.connect_ports(DS, port25, IFC, port27)
 component_map.print_connected_map()
 visualize_connections(component_map)
 print(f'Startup inventory is: {fueling_system.tritium_inventory}')
-simulation = Simulate(dt=0.1, final_time=final_time, I_reserve=I_reserve, component_map=component_map)
+simulation = Simulate(dt=0.01, final_time=final_time, I_reserve=I_reserve, component_map=component_map)
 t, y = simulation.run()
-plt.figure()
-plt.plot(t, y)
-plt.legend(component_map.components.keys())
+# np.savetxt('tritium_inventory.txt', [t,y], delimiter=',')
+fig,ax = plt.subplots()
+ax.loglog(t, y)
+ax.legend(component_map.components.keys())
+plt.show()
 print(f"Component inventories {y[-1]}")
