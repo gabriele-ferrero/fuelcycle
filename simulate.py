@@ -93,7 +93,7 @@ class Simulate:
         self.n_steps = int(self.final_time / dt)
 
 
-    def adaptive_timestep(self,y_new, y, t, tol=1e-6, max_dt=50, min_dt=1e-6):
+    def adaptive_timestep(self,y_new, y, t, tol=1e-6, max_dt=100, min_dt=1e-6):
         """
         Perform adaptive time stepping.
         """
@@ -132,8 +132,6 @@ class Simulate:
         t = 0
         print(f'Initial inventories = {self.y[0]} kg')
         while t < self.final_time:
-            # Set time for the pulsed source in plasma
-            self.components['Plasma'].set_current_time(t)
             if abs(t % self.interval) < 10:
                 print(f"Percentage completed = {abs(t - self.final_time)/self.final_time * 100:.1f}%", end='\r')
             dydt = self.f(self.y[-1])

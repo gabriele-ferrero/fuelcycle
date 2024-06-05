@@ -24,7 +24,7 @@ class Component:
         self.tritium_inventory = initial_inventory
         self.tritium_source = tritium_source
         self.non_radioactive_loss = non_radioactive_loss
-        # super().__init__()
+        super().__init__()
 
     def add_input_port(self, port_name, incoming_fraction=1.0):
         """

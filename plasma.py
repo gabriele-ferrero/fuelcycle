@@ -1,8 +1,7 @@
 from component import Component
-from pulsedSource import PulsedSource
 
-class Plasma(Component, PulsedSource):
-    def __init__(self, name, N_burn, TBE, AF, pulse_period, *args, **kwargs):
+class Plasma(Component):
+    def __init__(self, name, N_burn, TBE, **kwargs):
         """
         Initialize a Plasma object.
 
@@ -10,11 +9,10 @@ class Plasma(Component, PulsedSource):
             name (str): The name of the plasma.
             N_burn (float): The burn rate of the plasma.
             TBE (float): The tritium burnup efficiency of the plasma.
-            AF (float): The amplification factor of the pulse.
-            pulse_period (float): The period between pulses.
+            **kwargs: Additional keyword arguments.
+
         """
-        Component.__init__(self, name, residence_time = 1, *args, **kwargs)
-        PulsedSource.__init__(self, amplitude=N_burn, pulse_duration=pulse_period*AF, pulse_period=pulse_period)
+        super().__init__(name, residence_time=1, **kwargs)
         self.N_burn = N_burn
         self.TBE = TBE
 
@@ -26,7 +24,7 @@ class Plasma(Component, PulsedSource):
             float: The inflow rate of the plasma.
 
         """
-        return self.get_pulse()/self.TBE
+        return self.N_burn / self.TBE
 
     def get_outflow(self):
         """
@@ -36,7 +34,7 @@ class Plasma(Component, PulsedSource):
             float: The outflow rate of the plasma.
 
         """
-        return (1 - self.TBE)/self.TBE * self.get_pulse()
+        return (1 - self.TBE) / self.TBE * self.N_burn
     
     def calculate_inventory_derivative(self):
         """
@@ -48,5 +46,5 @@ class Plasma(Component, PulsedSource):
         """
         inflow = self.get_inflow()
         outflow = self.get_outflow()
-        dydt = inflow - outflow + self.tritium_source - self.get_pulse()
+        dydt = inflow - outflow + self.tritium_source - self.N_burn
         return dydt
