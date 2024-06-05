@@ -11,7 +11,7 @@ import numpy as np
 
 LAMBDA = 1.73e-9 # Decay constant for tritium
 AF = 0.7
-N_burn = 9.3e-7 * AF # Tritium burn rate in the plasma
+N_burn = 9.3e-7 # Tritium burn rate in the plasma
 TBR = 1.06
 tau_bb = 1.25 * 3600
 tau_fc =  3600
@@ -42,12 +42,12 @@ I_reserve = N_burn / TBE * q * t_res
 
 
 # Define components
-fueling_system = FuelingSystem("Fueling System", N_burn, TBE, initial_inventory=I_startup)
-BB = BreedingBlanket("BB", tau_bb, initial_inventory=0, N_burn = N_burn, TBR = TBR)
+fueling_system = FuelingSystem("Fueling System", N_burn, TBE, initial_inventory=I_startup, AF = AF)
+BB = BreedingBlanket("BB", tau_bb, initial_inventory=0, N_burn = N_burn, TBR = TBR, AF = AF)
 FW = Component("FW", residence_time = tau_FW)
 divertor = Component("Divertor", residence_time = tau_div)
 fuel_cleanup = Component("Fuel cleanup", tau_fc)
-plasma = Plasma("Plasma", N_burn, TBE) 
+plasma = Plasma("Plasma", N_burn, TBE, AF = AF) 
 TES = Component("TES", residence_time = tau_tes)
 HX = Component("HX", residence_time = tau_HX)
 DS = Component("DS", residence_time = tau_ds)

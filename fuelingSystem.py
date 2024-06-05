@@ -26,4 +26,4 @@ class FuelingSystem(Component):
         Returns:
             float: The outflow rate.
         """
-        return self.N_burn/self.TBE
+        return self.N_burn/self.TBE * self.AF

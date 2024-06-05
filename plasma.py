@@ -24,7 +24,7 @@ class Plasma(Component):
             float: The inflow rate of the plasma.
 
         """
-        return self.N_burn / self.TBE
+        return self.N_burn / self.TBE * self.AF
 
     def get_outflow(self):
         """
@@ -34,7 +34,7 @@ class Plasma(Component):
             float: The outflow rate of the plasma.
 
         """
-        return (1 - self.TBE) / self.TBE * self.N_burn
+        return (1 - self.TBE) / self.TBE * self.N_burn * self.AF
     
     def calculate_inventory_derivative(self):
         """
@@ -46,5 +46,5 @@ class Plasma(Component):
         """
         inflow = self.get_inflow()
         outflow = self.get_outflow()
-        dydt = inflow - outflow + self.tritium_source - self.N_burn
+        dydt = inflow - outflow + self.tritium_source - self.N_burn*self.AF
         return dydt

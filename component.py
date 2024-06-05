@@ -7,7 +7,7 @@ class Component:
     Represents a component in a fuel cycle system.
     """
 
-    def __init__(self, name, residence_time, initial_inventory=0, tritium_source=0, non_radioactive_loss=1e-4):
+    def __init__(self, name, residence_time, AF = None, initial_inventory=0, tritium_source=0, non_radioactive_loss=1e-4):
         """
         Initializes a Component object.
 
@@ -24,6 +24,7 @@ class Component:
         self.tritium_inventory = initial_inventory
         self.tritium_source = tritium_source
         self.non_radioactive_loss = non_radioactive_loss
+        self.AF = AF
         super().__init__()
 
     def add_input_port(self, port_name, incoming_fraction=1.0):
