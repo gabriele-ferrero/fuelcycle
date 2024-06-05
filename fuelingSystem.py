@@ -1,8 +1,7 @@
 from component import Component
-from pulsedSource import PulsedSource
 
-class FuelingSystem(Component, PulsedSource):
-    def __init__(self, name, N_burn, TBE, AF, pulse_period, *args, **kwargs):
+class FuelingSystem(Component):
+    def __init__(self, name, N_burn, TBE, **kwargs):
         """
         Initialize a FuelingSystem object.
 
@@ -15,8 +14,7 @@ class FuelingSystem(Component, PulsedSource):
         Returns:
             None
         """
-        Component.__init__(self, name, residence_time = 1, *args, **kwargs)
-        PulsedSource.__init__(self, amplitude=N_burn, pulse_duration=pulse_period*AF, pulse_period=pulse_period)      
+        super().__init__(name, residence_time=1, **kwargs)
         self.N_burn = N_burn
         self.TBE = TBE
 
@@ -28,4 +26,4 @@ class FuelingSystem(Component, PulsedSource):
         Returns:
             float: The outflow rate.
         """
-        return self.get_pulse()/self.TBE
+        return self.N_burn/self.TBE

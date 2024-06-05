@@ -46,7 +46,7 @@ I_reserve = N_burn / TBE * q * t_res
 
 
 # Define components
-fueling_system = FuelingSystem("Fueling System", N_burn, TBE, AF, pulse_period, initial_inventory=I_startup)
+fueling_system = FuelingSystem("Fueling System", N_burn, TBE, initial_inventory=I_startup)
 BB = BreedingBlanket("BB", tau_bb, initial_inventory=0, N_burn = N_burn, TBR = TBR)
 FW = Component("FW", residence_time = tau_FW)
 divertor = Component("Divertor", residence_time = tau_div)
