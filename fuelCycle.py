@@ -11,7 +11,7 @@ import numpy as np
 
 LAMBDA = 1.73e-9 # Decay constant for tritium
 AF = 0.7
-N_burn = 9.3e-7 # Tritium burn rate in the plasma
+N_burn = 9.3e-7 * AF # Tritium burn rate in the plasma
 TBR = 1.06
 tau_bb = 1.25 * 3600
 tau_fc =  3600
@@ -23,13 +23,15 @@ tau_ds = 3600
 tau_vp = 600
 tau_iss = 3 * 3600
 tau_membrane = 100
+fp_fw = 1e-4
+fp_div = 1e-4
 
 f_dir = 0.3
 f_iss_ds = 0.1
 
 I_startup = 1.1
 TBE = 0.02
-tes_efficiency = 0.9
+tes_efficiency = 0.95
 final_time = 2.1 * 3600 * 24 * 365 # NB: longer than doubling time
 hx_to_fw = 0.33
 hx_to_div = 0.33
@@ -47,7 +49,7 @@ BB = BreedingBlanket("BB", tau_bb, initial_inventory=0, N_burn = N_burn, TBR = T
 FW = Component("FW", residence_time = tau_FW)
 divertor = Component("Divertor", residence_time = tau_div)
 fuel_cleanup = Component("Fuel cleanup", tau_fc)
-plasma = Plasma("Plasma", N_burn, TBE, AF = AF) 
+plasma = Plasma("Plasma", N_burn, TBE, AF = AF, fp_fw=fp_fw, fp_div=fp_div) 
 TES = Component("TES", residence_time = tau_tes)
 HX = Component("HX", residence_time = tau_HX)
 DS = Component("DS", residence_time = tau_ds)
@@ -80,7 +82,7 @@ port21 = HX.add_output_port("HX to div")
 port22 = BB.add_input_port("Port 22")
 port23 = BB.add_input_port("Port 23")
 port24 = DS.add_input_port("Port 24", incoming_fraction=hx_to_ds)
-port25 = DS.add_output_port("DS to fuel cleanup")
+port25 = DS.add_output_port("DS to ISS")
 port26 = HX.add_output_port("HX to DS")
 port27 = fuel_cleanup.add_input_port("Port 27")  
 port28 = VP.add_input_port("Port 28")
@@ -131,7 +133,7 @@ component_map.connect_ports(ISS, port34, fueling_system, port7)
 component_map.connect_ports(ISS, port36, DS, port35)
 
 component_map.print_connected_map()
-visualize_connections(component_map)
+# visualize_connections(component_map)
 print(f'Startup inventory is: {fueling_system.tritium_inventory}')
 simulation = Simulate(dt=0.01, final_time=final_time, I_reserve=I_reserve, component_map=component_map)
 t, y = simulation.run()

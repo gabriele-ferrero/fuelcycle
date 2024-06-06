@@ -5,7 +5,7 @@ class BreedingBlanket(Component):
         super().__init__(name, residence_time, initial_inventory, non_radioactive_loss, *args,  **kwargs)
         self.N_burn = N_burn
         self._TBR = TBR  # Initialize _TBR directly
-        self.tritium_source = self.N_burn * self.TBR * self.AF
+        self.tritium_source = self.N_burn * self.TBR 
 
     @property
     def TBR(self):
@@ -14,6 +14,6 @@ class BreedingBlanket(Component):
     @TBR.setter
     def TBR(self, value):
         self._TBR = value
-        self.tritium_source = self.N_burn * self.TBR * self.AF
+        self.tritium_source = self.N_burn * self.TBR 
 
 

@@ -10,7 +10,7 @@ class Plasma(Component):
             N_burn (float): The burn rate of the plasma.
             TBE (float): The tritium burnup efficiency of the plasma.
             **kwargs: Additional keyword arguments.
-
+Z
         """
         super().__init__(name, residence_time=1, **kwargs)
         self.N_burn = N_burn
@@ -24,7 +24,7 @@ class Plasma(Component):
             float: The inflow rate of the plasma.
 
         """
-        return self.N_burn / self.TBE * self.AF
+        return self.N_burn / self.TBE 
 
     def get_outflow(self):
         """
@@ -34,7 +34,7 @@ class Plasma(Component):
             float: The outflow rate of the plasma.
 
         """
-        return (1 - self.TBE) / self.TBE * self.N_burn * self.AF
+        return (1 - self.TBE) / self.TBE * self.N_burn 
     
     def calculate_inventory_derivative(self):
         """
@@ -46,5 +46,5 @@ class Plasma(Component):
         """
         inflow = self.get_inflow()
         outflow = self.get_outflow()
-        dydt = inflow - outflow + self.tritium_source - self.N_burn*self.AF
+        dydt = inflow - outflow + self.tritium_source - self.N_burn
         return dydt

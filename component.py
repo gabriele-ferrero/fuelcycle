@@ -24,7 +24,9 @@ class Component:
         self.tritium_inventory = initial_inventory
         self.tritium_source = tritium_source
         self.non_radioactive_loss = non_radioactive_loss
-        self.AF = AF
+        # self.AF = AF
+        self.inflow = []
+        self.outflow = []
         super().__init__()
 
     def add_input_port(self, port_name, incoming_fraction=1.0):
@@ -137,6 +139,13 @@ class Component:
             new_value (float): The new value of the tritium inventory.
         """
         self.tritium_inventory = new_value
+
+    def store_flows(self):
+        """
+        Stores the inflow and outflow rates of the component.
+        """
+        self.inflow.append(self.get_inflow())
+        self.outflow.append(self.get_outflow())
 
 class TritoneComponent(Component, tritoneComponent):
     # Multiple inheritance from Component and tritoneComponent
