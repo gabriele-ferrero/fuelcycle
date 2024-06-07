@@ -158,7 +158,7 @@ class TritoneComponent(Component, tritoneComponent):
         self.c_in = self.get_inflow() / self.flow_rate + 1e-12 # TODO: use a better initialisation
 
     def get_outflow(self):
-        self.get_efficiency()
+        self.use_analytical_efficiency()
         self.outlet_c_comp()
         return self.c_out * self.flow_rate
     

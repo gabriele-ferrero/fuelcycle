@@ -1,5 +1,5 @@
 from fuelingSystem import FuelingSystem
-from component import Component, TritoneComponent
+from component import Component
 from plasma import Plasma
 from breedingBlanket import BreedingBlanket
 from componentMap import ComponentMap
@@ -7,9 +7,12 @@ from matplotlib import pyplot as plt
 from simulate import Simulate
 from tools.utils import visualize_connections
 import numpy as np
-from tools.component_tools import Fluid, Membrane
-import tools.materials as materials
 
+# Define input parameters for PAV
+T=973.15
+d_hyd=25.4E-3
+U0=2.5
+L = 10
 
 LAMBDA = 1.73e-9 # Decay constant for tritium
 AF = 1
@@ -17,7 +20,7 @@ N_burn = 9.3e-7 * AF # Tritium burn rate in the plasma adjusted for AF - THIS IS
 TBR = 1.067
 tau_bb = 1.25 * 3600
 tau_fc =  3600
-tau_tes = 24 * 3600
+tau_tes = L / U0
 tau_HX = 1 * 3600
 tau_FW = 1000
 tau_div = 1000
@@ -33,7 +36,7 @@ f_iss_ds = 0.1
 
 I_startup = 1.1
 TBE = 0.02
-tes_efficiency = 0.95
+tes_efficiency = 0.0972
 final_time = 2.1 * 3600 * 24 * 365 # NB: longer than doubling time
 hx_to_fw = 0.33
 hx_to_div = 0.33
@@ -45,17 +48,6 @@ t_res = 24 * 3600
 I_reserve = N_burn/AF / TBE * q * t_res
 
 
-# Define input parameters for PAV
-T=973.15
-d_hyd=25.4E-3
-U0=2.5
-flibe=Fluid(d_Hyd=d_hyd,U0=U0)
-flibe.set_properties_from_fluid_material(materials.Flibe(T))
-L = 10
-Steel = Membrane( thick=0.25E-3,k_r=1E9,k_d=1E9)
-Steel.set_properties_from_solid_material(materials.Steel(T))
-
-
 # Define components
 fueling_system = FuelingSystem("Fueling System", N_burn, TBE, initial_inventory=I_startup)
 BB = BreedingBlanket("BB", tau_bb, initial_inventory=0, N_burn = N_burn, TBR = TBR)
@@ -63,7 +55,7 @@ FW = Component("FW", residence_time = tau_FW)
 divertor = Component("Divertor", residence_time = tau_div)
 fuel_cleanup = Component("Fuel cleanup", tau_fc)
 plasma = Plasma("Plasma", N_burn, TBE, fp_fw=fp_fw, fp_div=fp_div)   
-TES = TritoneComponent("PAV", L=L, fluid=flibe, membrane=Steel)
+TES = Component("TES", residence_time = tau_tes)
 HX = Component("HX", residence_time = tau_HX)
 DS = Component("DS", residence_time = tau_ds)
 VP = Component("VP", residence_time = tau_vp)
@@ -152,7 +144,7 @@ component_map.connect_ports(fueling_system, port39, FW, port41)
 component_map.connect_ports(fueling_system, port40, divertor, port42)
 
 component_map.print_connected_map()
-visualize_connections(component_map)
+# visualize_connections(component_map)
 print(f'Startup inventory is: {fueling_system.tritium_inventory}')
 simulation = Simulate(dt=0.01, final_time=final_time, I_reserve=I_reserve, component_map=component_map)
 t, y = simulation.run()
@@ -161,4 +153,5 @@ fig,ax = plt.subplots()
 ax.loglog(t, y)
 ax.legend(component_map.components.keys())
 plt.show()
-print(f"Component inventories {y[-1]}")
+for component, inventory in zip(component_map.components.keys(), y[-1]):
+    print(f"{component}: {inventory * 1e3:.2f} g")
