@@ -47,7 +47,7 @@ class Component:
         self.input_ports[port_name] = port
         return port
 
-    def add_output_port(self, port_name):
+    def add_output_port(self, port_name, outgoing_fraction=1.0):
         """
         Adds an output port to the component.
 
@@ -57,7 +57,10 @@ class Component:
         Returns:
             Port: The created output port object.
         """
+        if not (0 <= outgoing_fraction <= 1):
+            raise ValueError("Incoming fraction must be between 0 and 1")
         port = Port(port_name)
+        port.outgoing_fraction = outgoing_fraction
         self.output_ports[port_name] = port
         return port
 
