@@ -11,8 +11,8 @@ import numpy as np
 
 LAMBDA = 1.73e-9 # Decay constant for tritium
 AF = 0.7
-N_burn = 9.3e-7 * AF # Tritium burn rate in the plasma
-TBR = 1.06
+N_burn = 9.3e-7 * AF # Tritium burn rate in the plasma adjusted for AF - THIS IS IMPACTING THE RESERVE INVENTORY
+TBR = 1.067
 tau_bb = 1.25 * 3600
 tau_fc =  3600
 tau_tes = 24 * 3600
@@ -40,16 +40,16 @@ hx_to_BB = 1 - hx_to_fw - hx_to_div - hx_to_ds
 
 q = 0.25
 t_res = 24 * 3600
-I_reserve = N_burn / TBE * q * t_res
+I_reserve = N_burn/AF / TBE * q * t_res
 
 
 # Define components
-fueling_system = FuelingSystem("Fueling System", N_burn, TBE, initial_inventory=I_startup, AF = AF)
-BB = BreedingBlanket("BB", tau_bb, initial_inventory=0, N_burn = N_burn, TBR = TBR, AF = AF)
+fueling_system = FuelingSystem("Fueling System", N_burn, TBE, initial_inventory=I_startup)
+BB = BreedingBlanket("BB", tau_bb, initial_inventory=0, N_burn = N_burn, TBR = TBR)
 FW = Component("FW", residence_time = tau_FW)
 divertor = Component("Divertor", residence_time = tau_div)
 fuel_cleanup = Component("Fuel cleanup", tau_fc)
-plasma = Plasma("Plasma", N_burn, TBE, AF = AF, fp_fw=fp_fw, fp_div=fp_div) 
+plasma = Plasma("Plasma", N_burn, TBE, fp_fw=fp_fw, fp_div=fp_div)   
 TES = Component("TES", residence_time = tau_tes)
 HX = Component("HX", residence_time = tau_HX)
 DS = Component("DS", residence_time = tau_ds)
@@ -59,7 +59,7 @@ membrane = Component("Membrane", residence_time = tau_membrane)
 
 # Define ports
 port1 = fueling_system.add_output_port("Fueling to Plasma")
-port2 = plasma.add_input_port("Port 2")
+port2 = plasma.add_input_port("Port 2", incoming_fraction= (1 - fp_div - fp_fw))
 port3 = plasma.add_output_port("Plasma to VP")
 port4 = fuel_cleanup.add_input_port("Port 4", incoming_fraction= 1 - f_dir)
 port5 = fuel_cleanup.add_output_port("fuel_cleanup to ISS")
@@ -96,6 +96,10 @@ port35 = DS.add_input_port("Port 35", incoming_fraction=f_iss_ds)
 port36 = ISS.add_output_port("ISS to DS")
 port37 = membrane.add_input_port("Port 37", incoming_fraction=tes_efficiency)
 port38 = membrane.add_output_port("Membrane to fueling system")
+port39 = fueling_system.add_output_port("Fueling to FW")
+port40= fueling_system.add_output_port("Fueling to div")
+port41 = FW.add_input_port("Port 41", incoming_fraction=fp_fw)
+port42 = divertor.add_input_port("Port 42", incoming_fraction=fp_div)
 
 # Add components to component map
 component_map = ComponentMap()
@@ -131,6 +135,8 @@ component_map.connect_ports(HX, port26, DS, port24)
 component_map.connect_ports(DS, port25, ISS, port33)
 component_map.connect_ports(ISS, port34, fueling_system, port7)
 component_map.connect_ports(ISS, port36, DS, port35)
+component_map.connect_ports(fueling_system, port39, FW, port41)
+component_map.connect_ports(fueling_system, port40, divertor, port42)
 
 component_map.print_connected_map()
 # visualize_connections(component_map)
