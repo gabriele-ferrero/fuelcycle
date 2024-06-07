@@ -10,7 +10,7 @@ from tools.utils import visualize_connections
 import numpy as np
 
 LAMBDA = 1.73e-9 # Decay constant for tritium
-AF = 0.7
+AF = 1
 N_burn = 9.3e-7 * AF # Tritium burn rate in the plasma adjusted for AF - THIS IS IMPACTING THE RESERVE INVENTORY
 TBR = 1.067
 tau_bb = 1.25 * 3600
@@ -148,4 +148,5 @@ fig,ax = plt.subplots()
 ax.loglog(t, y)
 ax.legend(component_map.components.keys())
 plt.show()
-print(f"Component inventories {y[-1]}")
+for component, inventory in zip(component_map.components.keys(), y[-1]):
+    print(f"{component}: {inventory * 1e3:.2f} g")

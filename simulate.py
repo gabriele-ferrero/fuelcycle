@@ -2,7 +2,7 @@ import numpy as np
 seconds_to_years = 1/(60*60*24*365)
 
 class Simulate:
-    def __init__(self, dt, final_time, I_reserve, component_map, TBRr_accuraty = 1e-3, target_doubling_time = 2):
+    def __init__(self, dt, final_time, I_reserve, component_map, max_simulations = 100, TBRr_accuraty = 1e-3, target_doubling_time = 2):
         """
         Initialize the Simulate class.
 
@@ -25,6 +25,8 @@ class Simulate:
         self.target_doubling_time = target_doubling_time # years 
         self.doubling_time = None
         self.I_reserve = I_reserve
+        self.simulation_count = 0
+        self.max_simulations = max_simulations
 
     def run(self, tolerance = 1e-3):
         """
@@ -35,12 +37,13 @@ class Simulate:
         - y: Array of component inventory values.
         """
         while True:
+            self.simulation_count += 1
             self.y[0] = [component.tritium_inventory for component in self.components.values()] # self.initial_conditions, possibly updated by the restart method
             t,y = self.forward_euler()
             self.doubling_time = self.compute_doubling_time(t,y)
             print(f"Doubling time: {self.doubling_time} \n")
             print('Startup inventory is: {} \n'.format(y[0][0]))
-            if (np.array(self.y)[:,0] - self.I_reserve < -tolerance).any(): # Increaase startup inventory if at any point the tritium inventory in the Fueling System component is below zero
+            if (np.array(self.y)[:,0] - self.I_reserve < -tolerance).any() and self.simulation_count < self.max_simulations: # Increaase startup inventory if at any point the tritium inventory in the Fueling System component is below zero
                 # self.y.pop() # remove the last element of y whose time is greater than the final time
                 # return t,y
                 difference = np.min(np.array(self.y)[:,0] - self.I_reserve)
@@ -48,7 +51,7 @@ class Simulate:
                 self.update_I_startup(difference)
                 print(f"Updated I_startup to {self.I_startup}")
                 self.restart()
-            elif self.doubling_time >= self.target_doubling_time or np.isnan(self.doubling_time):
+            elif self.doubling_time >= self.target_doubling_time or np.isnan(self.doubling_time) and self.simulation_count < self.max_simulations:
                 # self.y.pop() # remove the last element of y whose time is greater than the final time
                 # return t,y
                 self.restart()

@@ -27,7 +27,7 @@ class Component:
         # self.AF = AF
         self.inflow = []
         self.outflow = []
-        super().__init__()
+        # super().__init__()
 
     def add_input_port(self, port_name, incoming_fraction=1.0):
         """
@@ -155,10 +155,20 @@ class TritoneComponent(Component, tritoneComponent):
         self.flow_rate = 1e5
         Component.__init__(self, name, residence_time=1) 
         tritoneComponent.__init__(self, c_in = 0, L=L, fluid=fluid, membrane=membrane)
-        # self.c_in = self.get_inflow() / self.flow_rate + 1e-12 # TODO: use a better initialisation
+        self.c_in = self.get_inflow() / self.flow_rate + 1e-12 # TODO: use a better initialisation
 
     def get_outflow(self):
         self.get_efficiency()
         self.outlet_c_comp()
         return self.c_out * self.flow_rate
+    
+    def update_inventory(self, new_value):
+        """
+        Updates the tritium inventory of the component.
+
+        Args:
+            new_value (float): The new value of the tritium inventory.
+        """
+        self.c_in = self.get_inflow() / self.flow_rate + 1e-12 # TODO: use a better initialisation
+        self.tritium_inventory = new_value
 
