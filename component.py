@@ -161,16 +161,24 @@ class TritoneComponent(Component, tritoneComponent):
         self.c_in = self.get_inflow() / self.flow_rate + 1e-12 # TODO: use a better initialisation
 
     def get_outflow(self):
-        self.use_analytical_efficiency()
-        self.outlet_c_comp()
-        
-        for port in self.output_ports:
-            if "HX" in port.name:
-                port.outgoing_fraction = 1 - self.eff
-            elif "Membrane" in port.name:
-                port.outgoing_fraction = self.eff
-        
-        return self.c_out * self.flow_rate / self.eff # The outflow is always the total outflow, otherwise the flow to the membrane would be wrong
+        if self.c_in < 1e-8:
+            self.outlet_c_comp()
+            for port in self.output_ports.values():
+                if "HX" in port.name:
+                    port.outgoing_fraction = 1
+                elif "Membrane" in port.name:
+                    port.outgoing_fraction = 0
+            return self.c_out * self.flow_rate 
+        else:
+            self.use_analytical_efficiency()
+            self.outlet_c_comp()
+            for port in self.output_ports.values():
+                if "HX" in port.name:
+                    port.outgoing_fraction = 1 - self.eff
+                elif "Membrane" in port.name:
+                    port.outgoing_fraction = self.eff
+            
+            return self.c_out * self.flow_rate / self.eff # The outflow is always the total outflow, otherwise the flow to the membrane would be wrong
     
     def update_inventory(self, new_value):
         """

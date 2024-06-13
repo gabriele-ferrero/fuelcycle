@@ -1,6 +1,6 @@
-
+# TEST Tritone component 
 from fuelingSystem import FuelingSystem
-from component import Component
+from component import Component, TritoneComponent
 from plasma import Plasma
 from breedingBlanket import BreedingBlanket
 from componentMap import ComponentMap
@@ -8,6 +8,9 @@ from matplotlib import pyplot as plt
 from simulate import Simulate
 from tools.utils import visualize_connections
 import numpy as np
+from tools.component_tools import Fluid, Membrane
+import tools.materials as materials
+
 
 LAMBDA = 1.73e-9 # Decay constant for tritium
 AF = 1
@@ -31,7 +34,6 @@ f_iss_ds = 0.1
 
 I_startup = 1.1
 TBE = 0.02
-tes_efficiency = 0.95
 final_time = 2.1 * 3600 * 24 * 365 # NB: longer than doubling time
 hx_to_fw = 0.33
 hx_to_div = 0.33
@@ -43,6 +45,17 @@ t_res = 24 * 3600
 I_reserve = N_burn/AF / TBE * q * t_res
 
 
+# Define input parameters for PAV
+T=973.15
+d_hyd=25.4E-3
+U0=2.5
+flibe=Fluid(d_Hyd=d_hyd,U0=U0)
+flibe.set_properties_from_fluid_material(materials.Flibe(T))
+L = 10
+Steel = Membrane(thick=0.25E-3,k_r=1E9,k_d=1E9)
+Steel.set_properties_from_solid_material(materials.Steel(T))
+
+
 # Define components
 fueling_system = FuelingSystem("Fueling System", N_burn, TBE, initial_inventory=I_startup)
 BB = BreedingBlanket("BB", tau_bb, initial_inventory=0, N_burn = N_burn, TBR = TBR)
@@ -50,7 +63,7 @@ FW = Component("FW", residence_time = tau_FW)
 divertor = Component("Divertor", residence_time = tau_div)
 fuel_cleanup = Component("Fuel cleanup", tau_fc)
 plasma = Plasma("Plasma", N_burn, TBE, fp_fw=fp_fw, fp_div=fp_div)   
-TES = Component("TES", residence_time = tau_tes)
+TES = TritoneComponent("PAV", L=L, fluid=flibe, membrane=Steel)
 HX = Component("HX", residence_time = tau_HX)
 DS = Component("DS", residence_time = tau_ds)
 VP = Component("VP", residence_time = tau_vp)
@@ -70,7 +83,7 @@ port9 = TES.add_output_port("TES to Fueling System")
 port10 = TES.add_output_port("TES to HX")
 port11 = TES.add_input_port("Port 11")
 port12 = fueling_system.add_input_port("Port 12")
-port13 = HX.add_input_port("Port 13", incoming_fraction=1-tes_efficiency)
+port13 = HX.add_input_port("Port 13")
 port14 = HX.add_output_port("HX to BB")
 port15 = BB.add_input_port("Port 15", incoming_fraction= hx_to_BB)
 port16 = FW.add_input_port("Port 16", incoming_fraction=hx_to_fw)
@@ -82,7 +95,7 @@ port21 = HX.add_output_port("HX to div")
 port22 = BB.add_input_port("Port 22")
 port23 = BB.add_input_port("Port 23")
 port24 = DS.add_input_port("Port 24", incoming_fraction=hx_to_ds)
-port25 = DS.add_output_port("DS to ISS", outgoing_fraction= 0.9)
+port25 = DS.add_output_port("DS to ISS")
 port26 = HX.add_output_port("HX to DS")
 port27 = fuel_cleanup.add_input_port("Port 27")  
 port28 = VP.add_input_port("Port 28")
@@ -94,7 +107,7 @@ port33 = ISS.add_input_port("Port 33")
 port34 = ISS.add_output_port("ISS to fueling system")
 port35 = DS.add_input_port("Port 35", incoming_fraction=f_iss_ds)
 port36 = ISS.add_output_port("ISS to DS")
-port37 = membrane.add_input_port("Port 37", incoming_fraction=tes_efficiency)
+port37 = membrane.add_input_port("Port 37")
 port38 = membrane.add_output_port("Membrane to fueling system")
 port39 = fueling_system.add_output_port("Fueling to FW")
 port40= fueling_system.add_output_port("Fueling to div")
@@ -139,14 +152,13 @@ component_map.connect_ports(fueling_system, port39, FW, port41)
 component_map.connect_ports(fueling_system, port40, divertor, port42)
 
 component_map.print_connected_map()
-# visualize_connections(component_map)
+visualize_connections(component_map)
 print(f'Startup inventory is: {fueling_system.tritium_inventory}')
-simulation = Simulate(dt=0.01, final_time=final_time, I_reserve=I_reserve, component_map=component_map)
+simulation = Simulate(dt=0.01, final_time=final_time, I_reserve=I_reserve, component_map=component_map, max_simulations= 2)
 t, y = simulation.run()
 # np.savetxt('tritium_inventory.txt', [t,y], delimiter=',')
 fig,ax = plt.subplots()
 ax.loglog(t, y)
 ax.legend(component_map.components.keys())
 plt.show()
-for component, inventory in zip(component_map.components.keys(), y[-1]):
-    print(f"{component}: {inventory * 1e3:.2f} g")
+print(f"Component inventories {y[-1]}")

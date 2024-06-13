@@ -132,7 +132,10 @@ class Component:
         Returns:
             float: The concentration of the component at the outlet.
         """
-        self.c_out = self.c_in * (1 - self.eff)
+        if self.c_in < 1e-8:
+            self.c_out = self.c_in
+        else: 
+            self.c_out = self.c_in * (1 - self.eff)
 
     def T_leak(self) -> float:
         """
@@ -233,7 +236,7 @@ class Component:
                     K_S_L=self.fluid.Solubility,
                 )
 
-    def use_analytical_efficiency(self, L: float = None):
+    def use_analytical_efficiency(self):
         """Evaluates the analytical efficiency and substitutes it in the efficiency attribute of the component.
 
         Args:
@@ -241,7 +244,7 @@ class Component:
         Returns:
             None
         """
-        self.analytical_efficiency(L)
+        self.analytical_efficiency(self.L)
         self.eff = self.eff_an
 
     def get_efficiency(
