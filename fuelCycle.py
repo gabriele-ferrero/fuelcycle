@@ -9,6 +9,7 @@ from simulate import Simulate
 from tools.utils import visualize_connections
 import numpy as np
 from tools.component_tools import Fluid, Membrane
+from tools.component_tools import Geometry
 import tools.materials as materials
 
 
@@ -54,7 +55,7 @@ flibe.set_properties_from_fluid_material(materials.Flibe(T))
 L = 10
 Steel = Membrane(thick=0.25E-3,k_r=1E9,k_d=1E9)
 Steel.set_properties_from_solid_material(materials.Steel(T))
-
+geometry = Geometry(L=L, thick=0.5, D=d_hyd)
 
 # Define components
 fueling_system = FuelingSystem("Fueling System", N_burn, TBE, initial_inventory=I_startup)
@@ -63,7 +64,7 @@ FW = Component("FW", residence_time = tau_FW)
 divertor = Component("Divertor", residence_time = tau_div)
 fuel_cleanup = Component("Fuel cleanup", tau_fc)
 plasma = Plasma("Plasma", N_burn, TBE, fp_fw=fp_fw, fp_div=fp_div)   
-TES = TritoneComponent("PAV", L=L, fluid=flibe, membrane=Steel)
+TES = TritoneComponent("PAV", geometry = geometry, fluid=flibe, membrane=Steel)
 HX = Component("HX", residence_time = tau_HX)
 DS = Component("DS", residence_time = tau_ds)
 VP = Component("VP", residence_time = tau_vp)
