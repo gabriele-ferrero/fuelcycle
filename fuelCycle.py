@@ -14,7 +14,7 @@ import tools.materials as materials
 
 
 LAMBDA = 1.73e-9 # Decay constant for tritium
-AF = 1
+AF = 0.7
 N_burn = 9.3e-7 * AF # Tritium burn rate in the plasma adjusted for AF - THIS IS IMPACTING THE RESERVE INVENTORY
 TBR = 1.067
 tau_bb = 1.25 * 3600
@@ -45,7 +45,6 @@ q = 0.25
 t_res = 24 * 3600
 I_reserve = N_burn/AF / TBE * q * t_res
 
-
 # Define input parameters for PAV
 T=973.15
 d_hyd=25.4E-3
@@ -64,7 +63,8 @@ FW = Component("FW", residence_time = tau_FW)
 divertor = Component("Divertor", residence_time = tau_div)
 fuel_cleanup = Component("Fuel cleanup", tau_fc)
 plasma = Plasma("Plasma", N_burn, TBE, fp_fw=fp_fw, fp_div=fp_div)   
-TES = TritoneComponent("PAV", geometry = geometry, fluid=flibe, membrane=Steel)
+# TES = TritoneComponent("PAV", geometry = geometry, fluid=flibe, membrane=Steel)
+TES = Component("TES", residence_time = tau_tes)
 HX = Component("HX", residence_time = tau_HX)
 DS = Component("DS", residence_time = tau_ds)
 VP = Component("VP", residence_time = tau_vp)
