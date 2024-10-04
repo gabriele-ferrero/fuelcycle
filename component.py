@@ -179,8 +179,7 @@ class TritoneComponent(Component, tritoneComponent):
         tritoneComponent.__init__(
             self,
             name=name,
-            c_in=0,
-            eff=0,
+            c_in=1e-10,
             geometry=geometry,
             fluid=fluid,
             membrane=membrane,
@@ -191,6 +190,7 @@ class TritoneComponent(Component, tritoneComponent):
 
     def get_outflow(self):
         if self.c_in < 1e-8:
+            self.use_analytical_efficiency()
             self.outlet_c_comp()
             for port in self.output_ports.values():
                 if "HX" in port.name:
