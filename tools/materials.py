@@ -115,11 +115,11 @@ def LiPb(T):
     def k_S(T):
         # Henry's constant mol/m^3/Pa
         MM_LiPb = 180  # TODO
-        return 4.7e-7 * np.exp(-9e3 / (R_const * T) * density(T) / MM_LiPb)  # TODO
+        return 9.01e-2  # TODO
 
     LiPb = FluidMaterial(
         T,
-        D=H_diff(T),
+        # D=H_diff(T),
         Solubility=k_S(T),
         MS=False,
         mu=viscosity(T),
