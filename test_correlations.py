@@ -1,3 +1,7 @@
+import sys
+import os
+
+sys.path.append(os.path.abspath("."))
 from tools.correlations import (
     get_deltaTML,
     Nu_SiederTate,
@@ -24,7 +28,9 @@ def test_get_deltaTML():
     T_in_cold = 40.0
     T_out_cold = 20.0
 
-    expected_deltaTML = 40.0 / np.log(80 / 40)
+    expected_deltaTML = ((T_in_hot - T_out_cold) - (T_out_hot - T_in_cold)) / np.log(
+        (T_in_hot - T_out_cold) / (T_out_hot - T_in_cold)
+    )
 
     deltaTML = get_deltaTML(T_in_hot, T_out_hot, T_in_cold, T_out_cold)
 
