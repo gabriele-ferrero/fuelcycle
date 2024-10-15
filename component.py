@@ -173,7 +173,6 @@ class TritoneComponent(Component, tritoneComponent):
     # Multiple inheritance from Component and tritoneComponent
     def __init__(self, name, fluid, membrane, geometry):
         # TODO: inherit these attributes from tritoneComponent
-        self.volume = 1e3
         self.flow_rate = 1e5
         Component.__init__(self, name, residence_time=1)
         tritoneComponent.__init__(
