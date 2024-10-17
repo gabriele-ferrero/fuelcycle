@@ -79,7 +79,7 @@ class Simulate:
         if len(doubling_time_index) == 0:
             return np.nan
         else:
-            doubling_time = t[doubling_time_index[0]]* seconds_to_years
+            doubling_time = t[doubling_time_index[0]] * seconds_to_years
             return doubling_time
     
     def update_I_startup(self, margin):

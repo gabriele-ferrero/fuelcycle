@@ -205,7 +205,6 @@ class TritoneComponent(Component, tritoneComponent):
                 port.outgoing_fraction = 1 - self.eff
             elif "Membrane" in port.name:
                 port.outgoing_fraction = self.eff
-
         return (
             self.c_out * self.flow_rate / (1 - self.eff)
         )  # The outflow is always the total outflow, otherwise the flow to the membrane would be wrong
