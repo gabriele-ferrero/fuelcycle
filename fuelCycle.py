@@ -11,7 +11,7 @@ from tools.utils import visualize_connections
 LAMBDA = 1.73e-9 # Decay constant for tritium
 AF = 0.7
 N_burn = 9.3e-7 * AF # Tritium burn rate in the plasma
-TBR = 1.01
+TBR = 1.065
 tau_ofc = 2 * 3600
 tau_ifc = 5 * 3600
 tau_tes = 24 * 3600
@@ -19,7 +19,7 @@ tau_HX = 1 * 3600
 tau_FW = 1000
 tau_div = 1000
 tau_ds = 3600
-I_startup = 1.5
+I_startup = 1.3
 TBE = 0.02
 tes_efficiency = 0.9
 final_time = 2.1 * 3600 * 24 * 365 # NB: longer than doubling time
