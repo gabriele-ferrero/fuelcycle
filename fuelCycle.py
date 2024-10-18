@@ -16,7 +16,7 @@ import tools.materials as materials
 LAMBDA = 1.73e-9 # Decay constant for tritium
 AF = 0.7
 N_burn = 9.3e-7 * AF # Tritium burn rate in the plasma adjusted for AF - THIS IS IMPACTING THE RESERVE INVENTORY
-TBR = 1.067
+TBR = 1.073
 tau_bb = 1.25 * 3600
 tau_fc =  3600
 tau_tes = 24 * 3600
@@ -41,6 +41,7 @@ hx_to_div = 0.33
 hx_to_ds = 1e-4
 hx_to_BB = 1 - hx_to_fw - hx_to_div - hx_to_ds
 
+# tes_efficiency = 0.9
 q = 0.25
 t_res = 24 * 3600
 I_reserve = N_burn/AF / TBE * q * t_res
@@ -63,8 +64,8 @@ FW = Component("FW", residence_time = tau_FW)
 divertor = Component("Divertor", residence_time = tau_div)
 fuel_cleanup = Component("Fuel cleanup", tau_fc)
 plasma = Plasma("Plasma", N_burn, TBE, fp_fw=fp_fw, fp_div=fp_div)   
-# TES = TritoneComponent("PAV", geometry = geometry, fluid=flibe, membrane=Steel)
-TES = Component("TES", residence_time = tau_tes)
+TES = TritoneComponent("PAV", geometry = geometry, fluid=flibe, membrane=Steel, residence_time=tau_tes)
+# TES = Component("TES", residence_time = tau_tes)
 HX = Component("HX", residence_time = tau_HX)
 DS = Component("DS", residence_time = tau_ds)
 VP = Component("VP", residence_time = tau_vp)
@@ -84,6 +85,7 @@ port9 = TES.add_output_port("TES to Membrane")
 port10 = TES.add_output_port("TES to HX")
 port11 = TES.add_input_port("Port 11")
 port12 = fueling_system.add_input_port("Port 12")
+# port13 = HX.add_input_port("Port 13", incoming_fraction= 1 - tes_efficiency)
 port13 = HX.add_input_port("Port 13")
 port14 = HX.add_output_port("HX to BB")
 port15 = BB.add_input_port("Port 15", incoming_fraction= hx_to_BB)
@@ -108,6 +110,7 @@ port33 = ISS.add_input_port("Port 33")
 port34 = ISS.add_output_port("ISS to fueling system")
 port35 = DS.add_input_port("Port 35", incoming_fraction=f_iss_ds)
 port36 = ISS.add_output_port("ISS to DS")
+# port37 = membrane.add_input_port("Port 37", incoming_fraction = tes_efficiency)
 port37 = membrane.add_input_port("Port 37")
 port38 = membrane.add_output_port("Membrane to fueling system")
 port39 = fueling_system.add_output_port("Fueling to FW")
@@ -153,7 +156,7 @@ component_map.connect_ports(fueling_system, port39, FW, port41)
 component_map.connect_ports(fueling_system, port40, divertor, port42)
 
 # component_map.print_connected_map()
-visualize_connections(component_map)
+# visualize_connections(component_map)
 print(f'Startup inventory is: {fueling_system.tritium_inventory}')
 simulation = Simulate(dt=0.01, final_time=final_time, I_reserve=I_reserve, component_map=component_map, max_simulations= 2)
 t, y = simulation.run()
@@ -166,4 +169,3 @@ print(f"Component inventories: {component_map.components.keys()}: {y[-1]}\n")
 
 for component in component_map.components.values():
     print(f"Component: {component.name}, inflow: {component.inflow[-1]} kg/s, outflow: {component.outflow[-1]} kg/s")
-print(BB.tritium_source)
