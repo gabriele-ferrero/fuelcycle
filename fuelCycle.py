@@ -6,7 +6,7 @@ from componentMap import ComponentMap
 from matplotlib import pyplot as plt
 from simulate import Simulate
 import numpy as np
-import visualize_connections
+from tools.utils import visualize_connections
 
 LAMBDA = 1.73e-9 # Decay constant for tritium
 AF = 0.7
