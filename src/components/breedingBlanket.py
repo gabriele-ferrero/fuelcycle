@@ -1,4 +1,4 @@
-from component import Component
+from .component import Component
 
 class BreedingBlanket(Component):
     def __init__(self, name, residence_time,  N_burn, TBR, initial_inventory=0, non_radioactive_loss=0.0001, *args, **kwargs):

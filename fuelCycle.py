@@ -1,12 +1,12 @@
-from fuelingSystem import FuelingSystem
-from component import Component
-from plasma import Plasma
-from breedingBlanket import BreedingBlanket
-from componentMap import ComponentMap
+from src.components.fuelingSystem import FuelingSystem
+from src.components.component import Component
+from src.components.plasma import Plasma
+from src.components.breedingBlanket import BreedingBlanket
+from src.componentMap import ComponentMap
 from matplotlib import pyplot as plt
-from simulate import Simulate
+from src.simulate import Simulate
 import numpy as np
-from tools.utils import visualize_connections
+from src.tools.utils import visualize_connections
 
 LAMBDA = 1.73e-9 # Decay constant for tritium
 AF = 0.7
@@ -76,8 +76,7 @@ port9 = TES.add_output_port("TES to Membrane")
 port10 = TES.add_output_port("TES to HX")
 port11 = TES.add_input_port("Port 11")
 port12 = fueling_system.add_input_port("Port 12")
-# port13 = HX.add_input_port("Port 13", incoming_fraction= 1 - tes_efficiency)
-port13 = HX.add_input_port("Port 13")
+port13 = HX.add_input_port("Port 13", incoming_fraction= 1 - tes_efficiency)
 port14 = HX.add_output_port("HX to BB")
 port15 = BB.add_input_port("Port 15", incoming_fraction= hx_to_BB)
 port16 = FW.add_input_port("Port 16", incoming_fraction=hx_to_fw)
@@ -101,8 +100,7 @@ port33 = ISS.add_input_port("Port 33")
 port34 = ISS.add_output_port("ISS to fueling system")
 port35 = DS.add_input_port("Port 35", incoming_fraction=f_iss_ds)
 port36 = ISS.add_output_port("ISS to DS")
-# port37 = membrane.add_input_port("Port 37", incoming_fraction = tes_efficiency)
-port37 = membrane.add_input_port("Port 37")
+port37 = membrane.add_input_port("Port 37", incoming_fraction = tes_efficiency)
 port38 = membrane.add_output_port("Membrane to fueling system")
 port39 = fueling_system.add_output_port("Fueling to FW")
 port40= fueling_system.add_output_port("Fueling to div")
