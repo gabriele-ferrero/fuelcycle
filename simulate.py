@@ -2,7 +2,7 @@ import numpy as np
 seconds_to_years = 1/(60*60*24*365)
 
 class Simulate:
-    def __init__(self, dt, final_time, I_reserve, component_map, max_simulations = 100, TBRr_accuraty = 1e-3, target_doubling_time = 2):
+    def __init__(self, dt, final_time, I_reserve, component_map, dt_max=100, max_simulations = 100, TBRr_accuraty = 1e-3, target_doubling_time = 2):
         """
         Initialize the Simulate class.
 
@@ -13,6 +13,7 @@ class Simulate:
         """
         self.dt = dt
         self.initial_step_size = dt
+        self.dt_max = dt_max
         self.final_time = final_time
         self.time = []
         self.initial_conditions = {name: component.tritium_inventory for name, component in component_map.components.items()}
@@ -100,7 +101,7 @@ class Simulate:
         self.n_steps = int(self.final_time / dt)
 
 
-    def adaptive_timestep(self,y_new, y, t, tol=1e-6, max_dt=100, min_dt=1e-6):
+    def adaptive_timestep(self,y_new, y, t, tol=1e-6, min_dt=1e-6):
         """
         Perform adaptive time stepping.
         """
@@ -114,7 +115,7 @@ class Simulate:
         if t < 1000:
             dt_new = min(10, max(min_dt, dt_new))
         else:
-            dt_new = min(max_dt, max(min_dt, dt_new))
+            dt_new = min(self.dt_max, max(min_dt, dt_new))
         self.update_timestep(dt_new)
 
     def restart(self):
