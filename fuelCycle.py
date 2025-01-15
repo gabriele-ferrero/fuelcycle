@@ -42,16 +42,6 @@ q = 0.25
 t_res = 24 * 3600
 I_reserve = N_burn/AF / TBE * q * t_res
 
-# Define input parameters for PAV
-T=973.15
-d_hyd=25.4E-3
-U0=2.5
-flibe=Fluid(d_Hyd=d_hyd,U0=U0)
-flibe.set_properties_from_fluid_material(materials.Flibe(T))
-L = 10
-Steel = Membrane(thick=0.25E-3,k_r=1E9,k_d=1E9)
-Steel.set_properties_from_solid_material(materials.Steel(T))
-geometry = Geometry(L=L, thick=0.5, D=d_hyd)
 
 # Define components
 fueling_system = FuelingSystem("Fueling System", N_burn, TBE, initial_inventory=I_startup)
