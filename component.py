@@ -1,5 +1,4 @@
 from port import Port
-from tools.component_tools import Component as tritoneComponent
 
 LAMBDA = 1.73e-9  # Decay constant for tritium
 
@@ -167,63 +166,3 @@ class Component:
         """
         self.inflow.append(self.get_inflow())
         self.outflow.append(self.get_outflow())
-
-
-class TritoneComponent(Component, tritoneComponent):
-    # Multiple inheritance from Component and tritoneComponent
-    def __init__(self, name, fluid, membrane, geometry, residence_time):
-        # TODO: inherit these attributes from tritoneComponent
-        self.flow_rate = 2e3 # kg/s
-        Component.__init__(self, name, residence_time=residence_time, non_radioactive_loss=0)
-        tritoneComponent.__init__(
-            self,
-            name=name,
-            c_in=1e-10,
-            geometry=geometry,
-            fluid=fluid,
-            membrane=membrane,
-        )
-
-        self.c_in = (
-            self.get_inflow() / self.flow_rate + 1e-12
-        )  # TODO: use a better initialisation
-
-    def get_outflow(self):
-        # if self.c_in < 1e-8:
-        #     self.use_analytical_efficiency()
-        #     self.outlet_c_comp()
-        #     for port in self.output_ports.values():
-        #         if "HX" in port.name:
-        #             port.outgoing_fraction = 1
-        #         elif "Membrane" in port.name:
-        #             port.outgoing_fraction = 0
-        #     return self.c_out * self.flow_rate
-        # else:
-        self.use_analytical_efficiency()
-        self.outlet_c_comp()
-        for port in self.output_ports.values():
-            if "HX" in port.name:
-                port.outgoing_fraction = 1 - self.eff
-            elif "Membrane" in port.name:
-                port.outgoing_fraction = self.eff
-        # print(f"Efficiency = {self.eff}")
-        # print(f"Outlet concentration = {self.c_out}")
-        # print(f"Inlet concentration = {self.c_in}")
-        # print(f"Outflow rate = {self.tritium_inventory / self.residence_time}")
-        # print(f"Total inflow rate = {self.get_inflow()}")
-        # return self.get_inflow()  # The outflow is always the total outflow, otherwise the flow to the membrane would be wrong
-        return self.tritium_inventory / self.residence_time
-
-        # return self.c_out * self.flow_rate / (1 - self.eff)  # The outflow is always the total outflow, otherwise the flow to the membrane would be wrong
-
-    def update_inventory(self, new_value):
-        """
-        Updates the tritium inventory of the component.
-
-        Args:
-            new_value (float): The new value of the tritium inventory.
-        """
-        self.c_in = (
-            self.get_inflow() / self.flow_rate + 1e-12
-        )  # TODO: use a better initialisation
-        self.tritium_inventory = new_value

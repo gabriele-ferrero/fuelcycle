@@ -6,11 +6,7 @@ from breedingBlanket import BreedingBlanket
 from componentMap import ComponentMap
 from matplotlib import pyplot as plt
 from simulate import Simulate
-from tools.utils import visualize_connections
 import numpy as np
-from tools.component_tools import Fluid, Membrane
-from tools.component_tools import Geometry
-import tools.materials as materials
 
 
 LAMBDA = 1.73e-9 # Decay constant for tritium
@@ -64,8 +60,7 @@ FW = Component("FW", residence_time = tau_FW)
 divertor = Component("Divertor", residence_time = tau_div)
 fuel_cleanup = Component("Fuel cleanup", tau_fc)
 plasma = Plasma("Plasma", N_burn, TBE, fp_fw=fp_fw, fp_div=fp_div)   
-TES = TritoneComponent("PAV", geometry = geometry, fluid=flibe, membrane=Steel, residence_time=tau_tes)
-# TES = Component("TES", residence_time = tau_tes)
+TES = Component("TES", residence_time = tau_tes)
 HX = Component("HX", residence_time = tau_HX)
 DS = Component("DS", residence_time = tau_ds)
 VP = Component("VP", residence_time = tau_vp)
