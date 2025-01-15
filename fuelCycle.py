@@ -12,6 +12,8 @@ LAMBDA = 1.73e-9 # Decay constant for tritium
 AF = 0.7
 N_burn = 9.3e-7 * AF # Tritium burn rate in the plasma adjusted for AF - THIS IS IMPACTING THE RESERVE INVENTORY
 TBR = 1.073
+
+# Residence times
 tau_bb = 1.25 * 3600
 tau_fc =  3600
 tau_tes = 24 * 3600
@@ -22,21 +24,21 @@ tau_ds = 3600
 tau_vp = 600
 tau_iss = 3 * 3600
 tau_membrane = 100
+
+# Flow fractions
 fp_fw = 1e-4
 fp_div = 1e-4
-
 f_dir = 0.3
 f_iss_ds = 0.1
-
-I_startup = 1.1
-TBE = 0.02
-final_time = 2.1 * 3600 * 24 * 365 # NB: longer than doubling time
 hx_to_fw = 0.33
 hx_to_div = 0.33
 hx_to_ds = 1e-4
 hx_to_BB = 1 - hx_to_fw - hx_to_div - hx_to_ds
 
-# tes_efficiency = 0.9
+# General input parameters
+I_startup = 1.1
+TBE = 0.02
+final_time = 2.1 * 3600 * 24 * 365 # NB: longer than doubling time
 q = 0.25
 t_res = 24 * 3600
 I_reserve = N_burn/AF / TBE * q * t_res
@@ -140,13 +142,22 @@ component_map.connect_ports(fueling_system, port39, FW, port41)
 component_map.connect_ports(fueling_system, port40, divertor, port42)
 
 # component_map.print_connected_map()
-visualize_connections(component_map)
+# visualize_connections(component_map)
 print(f'Startup inventory is: {fueling_system.tritium_inventory}')
-simulation = Simulate(dt=0.01, final_time=final_time, I_reserve=I_reserve, component_map=component_map, max_simulations= 3)
+simulation = Simulate(dt=0.01, dt_max = 1000, final_time=final_time, I_reserve=I_reserve, component_map=component_map, max_simulations=2)
 t, y = simulation.run()
 # np.savetxt('tritium_inventory.txt', [t,y], delimiter=',')
+
+combinations = [
+    ('b', '-'), ('orange', '--'), ('g', ':'), ('r', '-.'), 
+    ('purple', '-'), ('brown', '--'), ('pink', ':'), ('gray', '-.'), 
+    ('olive', '-'), ('c', '--'), ('navy', ':'), ('maroon', '-.')
+]
+
 fig,ax = plt.subplots()
-ax.loglog(t, y)
+for i, (color, linestyle) in enumerate(combinations):
+    ax.loglog(t, np.array(y)[:,i], color=color, linestyle=linestyle)
+# ax.loglog(t, y)
 ax.legend(component_map.components.keys())
 plt.show()
 print(f"Component inventories: {component_map.components.keys()}: {y[-1]}\n")
