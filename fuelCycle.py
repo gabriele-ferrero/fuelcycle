@@ -16,6 +16,10 @@ TBR = 1.073
 # Residence times
 tau_bb = 1.25 * 3600
 tau_fc =  3600
+
+tau_ofc = 2 * 3600
+tau_ifc = 5 * 3600
+
 tau_tes = 24 * 3600
 tau_HX = 1 * 3600
 tau_FW = 1000
@@ -30,6 +34,7 @@ fp_fw = 1e-4
 fp_div = 1e-4
 f_dir = 0.3
 f_iss_ds = 0.1
+tes_efficiency = 0.9
 hx_to_fw = 0.33
 hx_to_div = 0.33
 hx_to_ds = 1e-4
