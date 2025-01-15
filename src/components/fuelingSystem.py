@@ -1,4 +1,4 @@
-from component import Component
+from .component import Component
 
 class FuelingSystem(Component):
     def __init__(self, name, N_burn, TBE, **kwargs):

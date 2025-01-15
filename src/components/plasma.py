@@ -1,4 +1,4 @@
-from component import Component
+from .component import Component
 
 class Plasma(Component):
     def __init__(self, name, N_burn, TBE, fp_fw, fp_div, **kwargs):
