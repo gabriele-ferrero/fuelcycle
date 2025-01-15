@@ -1,6 +1,6 @@
 # TEST Tritone component 
 from fuelingSystem import FuelingSystem
-from component import Component, TritoneComponent
+from component import Component
 from plasma import Plasma
 from breedingBlanket import BreedingBlanket
 from componentMap import ComponentMap
@@ -141,7 +141,7 @@ component_map.connect_ports(fueling_system, port39, FW, port41)
 component_map.connect_ports(fueling_system, port40, divertor, port42)
 
 # component_map.print_connected_map()
-# visualize_connections(component_map)
+visualize_connections(component_map)
 print(f'Startup inventory is: {fueling_system.tritium_inventory}')
 simulation = Simulate(dt=0.01, final_time=final_time, I_reserve=I_reserve, component_map=component_map, max_simulations= 2)
 t, y = simulation.run()
