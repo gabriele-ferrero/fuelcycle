@@ -1,4 +1,4 @@
-from src.port import Port
+from src.openfc.port import Port
 
 LAMBDA = 1.73e-9  # Decay constant for tritium
 
