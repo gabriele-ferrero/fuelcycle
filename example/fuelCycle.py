@@ -4,15 +4,15 @@ import os
 # Add the root directory to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.components.fuelingSystem import FuelingSystem
-from src.components.component import Component
-from src.components.plasma import Plasma
-from src.components.breedingBlanket import BreedingBlanket
-from src.componentMap import ComponentMap
+from src.openfc.components.fuelingSystem import FuelingSystem
+from src.openfc.components.component import Component
+from src.openfc.components.plasma import Plasma
+from src.openfc.components.breedingBlanket import BreedingBlanket
+from src.openfc.componentMap import ComponentMap
 from matplotlib import pyplot as plt
-from src.simulate import Simulate
+from src.openfc.simulate import Simulate
 import numpy as np
-from src.tools.utils import visualize_connections
+from src.openfc.tools.utils import visualize_connections
 
 LAMBDA = 1.73e-9 # Decay constant for tritium
 AF = 0.7
