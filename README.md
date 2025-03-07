@@ -4,5 +4,6 @@ The code models and simulates the various components of the fuel cycle in a nucl
 
 ## References
 Meschini, S., Ferry, S. E., Delaporte-Mathurin, R., & Whyte, D. G. (2023). Modeling and analysis of the tritium fuel cycle for ARC-and STEP-class DT fusion power plants. Nuclear Fusion, 63(12), 126005.
+
 Meschini, S., Delaporte-Mathurin, R., Tynan, G. R., & Ferry, S. (2025). Impact of trapping on tritium self-sufficiency and tritium inventories in fusion power plant fuel cycles. Nuclear Fusion.
 
