@@ -2,7 +2,7 @@ name: Build and Deploy Documentation
 
 on:
     push:
-        branches: testing  # Set this to the branch you use for releases or development
+        branches: main  # Set this to the branch you use for releases or development
 
 jobs:
   build:
